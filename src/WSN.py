@@ -17,8 +17,10 @@ class WSN:
             for cluster in self.__clusters:
                 for d in cluster.get_devices():
                     if(d is not cluster.get_head() and d.alive()):
-                        d.send_data(Constants.MESSAGE_LENGTH,
-                                    cluster.get_head())
+                        if(cluster.get_head().alive()):
+                            d.send_data(Constants.MESSAGE_LENGTH,
+                                        cluster.get_head())
+                    d.consume()
             plotter.draw_devices()
             plotter.draw_energy(self.__get_total_energy())
     
