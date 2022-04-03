@@ -1,15 +1,10 @@
-from Device import Device, Sensor, DeviceCluster
+from src.Device import Device, DeviceCluster
+from src.WSN import WSN
 from random import random
-import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
 from kneed import KneeLocator
 from sklearn.metrics import pairwise_distances
-import ns.applications
-import ns.core
-import ns.internet
-import ns.network
-import ns.point_to_point
 
 # Safety substract
 def savesub(a, b):
@@ -18,27 +13,6 @@ def savesub(a, b):
 # Safety add
 def saveadd(a, b, max):
     return a + b if (a + b < max) else max
-
-# Matplotlib draw devices, sensors and clusters
-def draw_devices(clusters):
-    chColor = (1, 0, 0)
-    for cluster in clusters:
-        deviceColor = (random(), random(), random())
-        sensorColor = (random(), random(), random())
-        for dev in cluster.get_devices():
-            devpos = dev.get_pos()
-            senspos = dev.get_sensor().get_pos()
-            if(dev is cluster.get_head()):
-                plt.plot(devpos[0], devpos[1], marker='o', linestyle='None', markersize=7, color=chColor)
-                plt.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", fontsize=7)
-            else:
-                plt.plot(devpos[0], devpos[1], marker='o', linestyle='None', markersize=7, color=deviceColor)
-                plt.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", fontsize=7)
-            plt.plot(senspos[0], senspos[1], marker='o', linestyle='None', markersize=7, color=sensorColor)
-            plt.plot([devpos[0], senspos[0]], [devpos[1], senspos[1]], 'g-')
-            plt.text(senspos[0] + 0.5, senspos[1] + 0.5, "Sensor", fontsize=7)
-    plt.show()
-
 
 map_size = (1000, 1000)
 devices_amount = 50
@@ -49,19 +23,7 @@ points = []
 delta = 10
 for i in range(devices_amount):
     current_position = [int(random()*map_size[0]), int(random()*map_size[1])]
-    sensor_x = savesub(current_position[0], 30) + \
-                       random()*(saveadd(current_position[0], 30, map_size[0] - 1) - \
-                       savesub(current_position[0], 15)) + delta
-    sensor_y = savesub(current_position[1], 30) + \
-                       random()*(saveadd(current_position[1], 30, map_size[1] - 1) - \
-                       savesub(current_position[1], 15)) + delta
-    new_delay = int(random()*10)
-    new_energy = int(random()*10)
-    temperature = 30 + int(random()*30)
-    load = int(100*random())
-    new_device = Device(current_position, new_delay, new_energy, temperature, load)
-    
-    new_device.set_sensor(Sensor([sensor_x, sensor_y]))
+    new_device = Device(current_position)
     Devices.append(new_device)
     points.append(current_position)
 
@@ -71,7 +33,8 @@ for k in range(1, max_clusters_amount):
     kmeans = KMeans(n_clusters=k)
     kmeans.fit(points)
     sse.append(kmeans.inertia_)
-kl = KneeLocator(range(1, max_clusters_amount), sse, curve="convex", direction="decreasing")
+kl = KneeLocator(range(1, max_clusters_amount), sse, curve="convex", 
+                 direction="decreasing")
 ### MAKE PREDICTIONS
 kmeans = KMeans(n_clusters=kl.elbow)
 kmeans.fit(points)
@@ -82,9 +45,11 @@ clusters = []
 for i in range(0, len(centers)):
     clusterDevices = np.array(Devices)[np.where(predictions == i)]
     positions = [dev.get_pos() for dev in clusterDevices]
-    dist = pairwise_distances(positions, [centers[i]], metric='euclidean', n_jobs=None, force_all_finite=True)[:, 0]
+    dist = pairwise_distances(positions, [centers[i]], metric='euclidean',
+                              n_jobs=None, force_all_finite=True)[:, 0]
     head = clusterDevices[np.where(dist == min(dist))][0]
-    cluster = DeviceCluster(clusterDevices.tolist(), head, i)
+    cluster = DeviceCluster(clusterDevices.tolist(), head)
     clusters.append(cluster)
-### DRAW INITIAL DATA
-draw_devices(clusters)
+net = WSN(clusters, 10000)
+net.simulate()
+
