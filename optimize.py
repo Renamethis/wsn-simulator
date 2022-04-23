@@ -14,7 +14,7 @@ def savesub(a, b):
 def saveadd(a, b, max):
     return a + b if (a + b < max) else max
 
-map_size = (1000, 1000)
+map_size = (500, 500)
 devices_amount = 50
 Devices = []
 max_clusters_amount = 10
@@ -24,7 +24,10 @@ points = []
 
 delta = 10
 for i in range(devices_amount):
-    current_position = [int(random()*map_size[0]), int(random()*map_size[1])]
+    current_position = [
+        np.random.uniform(0, map_size[0]),
+        np.random.uniform(0, map_size[1])
+    ]
     new_device = Device(current_position)
     Devices.append(new_device)
     points.append(current_position)
@@ -61,5 +64,5 @@ for i in range(0, len(centers)):
 ### Simulate WSN network
 
 net = WSN(clusters, 20000)
-net.simulate()
-
+net.simulate(pso=True)
+net.simulate(pso=False)

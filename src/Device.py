@@ -1,5 +1,5 @@
 from ast import Constant
-from enum import Enum
+from enum import Enum, auto
 from math import sqrt
 from random import random
 # Defined constants
@@ -9,7 +9,7 @@ class Constants(float, Enum):
     # energy dissipated at the power amplifier (multi-path)
     E_MP = 0.0013e-12 
     # energy dissipated at the power amplifier (line-of-sight)
-    E_FS = 10e-12 
+    E_FS = 10e-12
     # energy dissipated at the data aggregation
     E_DA = 5e-9
     # energy dissipated at other electronics
@@ -23,20 +23,29 @@ class Constants(float, Enum):
 class Sensors(Enum):
     DEFAULT = 0
 
+# Device state
+class State(Enum):
+    HEAD = auto()
+    ACTIVE = auto()
+    SLEEP = auto()
+
 # WSN node class
 class Device:
 
-    def __init__(self, pos, energy=2.0, sensor_type=Sensors.DEFAULT):
-        self._pos = pos
-        self._energy = energy
-        self._sensor_type = sensor_type
+    def __init__(self, pos, energy=0.5, sensor_type=Sensors.DEFAULT):
+        self.__pos = pos
+        self.__initial_energy = self.__energy = energy
+        self.__sensor_type = sensor_type
+        self.__state = State.ACTIVE
 
     def alive(self):
-        return self._energy > 0.0
+        return self.__energy > 0.0
 
     # Calculate and sub transmitter energy consumption
     def send_data(self, length, receiver):
-        distance = self.__calculate_distance(self, receiver)
+        if(self.__state == State.SLEEP):
+            return
+        distance = self.__calculate_distance(receiver)
         # Transmitter energy model 
         energy = Constants.ENERGY
         if(distance > Constants.THRESHOLD_DIST):
@@ -45,32 +54,44 @@ class Device:
             energy += Constants.E_FS*(distance**2)
         energy *= length
 
-        self._energy -= energy
+        self.__energy -= energy
         receiver.receive(length)
         receiver.aggregate(length)
 
     # Energy spent on receive message
     def receive(self, length):
-        self._energy -= Constants.ENERGY * length
+        self.__energy -= Constants.ENERGY * length
 
     # Energy spent on aggregate message
     def aggregate(self, length):
-        self._energy -= Constants.E_DA * length
+        self.__energy -= Constants.E_DA * length
 
     # Energy spent on other electronics
     def consume(self):
-        self._energy -= Constants.E_ED
+        self.__energy -= Constants.E_ED
+
+    def set_energy(self, energy):
+        self.__energy = energy
+
+    def set_state(self, state):
+        self.__state = state
+
+    def get_state(self):
+        return self.__state
 
     def get_pos(self):
-        return self._pos
+        return self.__pos
 
     def get_energy(self):
-        return self._energy
+        return self.__energy
+
+    def get_initial_energy(self):
+        return self.__initial_energy
 
     # Calculate distance between two nodes
-    def __calculate_distance(self, n1, n2):
-        return sqrt((n1.get_pos()[0] - n2.get_pos()[0])**2 + (n1.get_pos()[1] - 
-            n2.get_pos()[1])**2)
+    def __calculate_distance(self, node):
+        return sqrt((self.get_pos()[0] - node.get_pos()[0])**2 + (self.get_pos()[1] - 
+            node.get_pos()[1])**2)
 
 class DeviceCluster:
 
@@ -86,6 +107,17 @@ class DeviceCluster:
             if(dev.alive()):
                 energy += dev.get_energy()
         return energy
+
+    def get_cluster_initial_energy(self):
+        energy = 0
+        for dev in self.__devices:
+            if(dev.alive()):
+                energy += dev.get_initial_energy()
+        return energy
+
+    # Setters
+    def set_head(self, head):
+        self.__cluster_head = head
 
     # Getters
 
