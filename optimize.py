@@ -1,5 +1,5 @@
 from src.Device import Device, DeviceCluster
-from src.WSN import WSN
+from src.Simulator import Simulator
 from random import random
 from sklearn.cluster import KMeans
 import numpy as np
@@ -63,6 +63,5 @@ for i in range(0, len(centers)):
 
 ### Simulate WSN network
 
-net = WSN(clusters, 20000)
-net.simulate(pso=True)
-net.simulate(pso=False)
+net = Simulator(clusters, 20000)
+net.mainloop()

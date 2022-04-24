@@ -5,11 +5,11 @@ from random import random
 # Defined constants
 class Constants(float, Enum):
     # energy dissipated at the transceiver electronic
-    ENERGY = 50e-7
+    ENERGY = 50e-9
     # energy dissipated at the power amplifier (multi-path)
-    E_MP = 0.0013e-10
+    E_MP = 0.0013e-12
     # energy dissipated at the power amplifier (line-of-sight)
-    E_FS = 10e-10
+    E_FS = 10e-9
     # energy dissipated at the data aggregation
     E_DA = 5e-7
     # energy dissipated at other electronics
@@ -28,6 +28,7 @@ class State(Enum):
     HEAD = auto()
     ACTIVE = auto()
     SLEEP = auto()
+    DEAD = auto()
 
 # WSN node class
 class Device:
@@ -38,6 +39,29 @@ class Device:
         self.__sensor_type = sensor_type
         self.__state = State.ACTIVE
 
+    ## SETTERS
+
+    def set_energy(self, energy):
+        self.__energy = energy
+
+    def set_state(self, state):
+        self.__state = state
+
+    ## GETTERS 
+
+    def get_state(self):
+        return self.__state
+
+    def get_pos(self):
+        return self.__pos
+
+    def get_energy(self):
+        return self.__energy
+
+    def get_initial_energy(self):
+        return self.__initial_energy
+
+    # Check if device alive
     def alive(self):
         return self.__energy > 0.0
 
@@ -53,40 +77,42 @@ class Device:
         else:
             energy += Constants.E_FS*(distance**2)
         energy *= length
-
-        self.__energy -= energy
+        self.consume(energy)
         receiver.receive(length)
         receiver.aggregate(length)
 
     # Energy spent on receive message
     def receive(self, length):
-        self.__energy -= Constants.ENERGY * length
+        self.consume(Constants.ENERGY * length)
 
     # Energy spent on aggregate message
     def aggregate(self, length):
-        self.__energy -= Constants.E_DA * length
+        self.consume(Constants.E_DA * length)
 
     # Energy spent on other electronics
-    def consume(self):
-        self.__energy -= Constants.E_ED
+    def stay(self):
+        self.consume(Constants.E_ED)
 
-    def set_energy(self, energy):
+    # Consume energy function
+    def consume(self, energy):
+        if(energy > self.__energy):
+            self.__energy = 0
+        else:
+            self.__energy -= energy
+
+    # Reset energy device and state
+    def reset(self):
+        self.__energy = self.__initial_energy
+        if(self.__state == State.HEAD):
+            return
+        self.__state = State.ACTIVE
+
+    # Reset energy device and state 
+    def reset(self, energy):
         self.__energy = energy
-
-    def set_state(self, state):
-        self.__state = state
-
-    def get_state(self):
-        return self.__state
-
-    def get_pos(self):
-        return self.__pos
-
-    def get_energy(self):
-        return self.__energy
-
-    def get_initial_energy(self):
-        return self.__initial_energy
+        if(self.__state == State.HEAD):
+            return
+        self.__state = State.ACTIVE
 
     # Calculate distance between two nodes
     def __calculate_distance(self, node):
@@ -99,27 +125,14 @@ class DeviceCluster:
         self.__devices = devices
         self.__cluster_head = head
         self.__color = (random(), random(), random())
+    
+    # SETTERS
 
-    # Return remaining energy in whole cluster
-    def get_cluster_energy(self):
-        energy = 0
-        for dev in self.__devices:
-            if(dev.alive()):
-                energy += dev.get_energy()
-        return energy
-
-    def get_cluster_initial_energy(self):
-        energy = 0
-        for dev in self.__devices:
-            if(dev.alive()):
-                energy += dev.get_initial_energy()
-        return energy
-
-    # Setters
     def set_head(self, head):
         self.__cluster_head = head
+        self.__cluster_head.set_state(State.HEAD)
 
-    # Getters
+    # GETTERS
 
     def get_devices(self):
         return self.__devices
@@ -129,5 +142,21 @@ class DeviceCluster:
 
     def get_color(self):
         return self.__color
+
+    # Return remaining energy in whole cluster
+    def get_cluster_energy(self):
+        energy = 0
+        for dev in self.__devices:
+            if(dev.alive()):
+                energy += dev.get_energy()
+        return energy
+
+    # Return initial energy of whole cluster
+    def get_cluster_initial_energy(self):
+        energy = 0
+        for dev in self.__devices:
+            if(dev.alive()):
+                energy += dev.get_initial_energy()
+        return energy
 
 

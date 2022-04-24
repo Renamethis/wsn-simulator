@@ -1,24 +1,31 @@
-from src.Plotter import Plot
 from src.Device import Constants, State
 import numpy as np
 import pyswarms as ps
-import sys
+from threading import Thread
+
 class WSN:
 
     def __init__(self, clusters, max_iters):
         self.__clusters = clusters
         self.__max_iters = max_iters
-
+        self.__energy_trace = []
+        self.__nodes_trace = []
+    
     def simulate(self, pso):
-        plotter = Plot(self.__clusters)
-        traces = []
+        self.__running = True
+        self.__thread = Thread(target=self.__simulation_loop, args=(pso,))
+        self.__thread.start()
+        
+    def __simulation_loop(self, pso):
+        self.__energy_trace.clear()
+        self.__nodes_trace.clear()
         ### SET ENERGY
         for cluster in self.__clusters:
             for d in cluster.get_devices():
                 d.set_energy(0.5)
                 d.set_state(State.ACTIVE)
         for i in range(self.__max_iters):
-            if(self.__get_total_energy() == 0.0):
+            if(self.__get_total_energy() == 0.0 or not self.__running):
                 break
             #self.__set_cluster_heads()
             for cluster in self.__clusters:
@@ -26,7 +33,7 @@ class WSN:
                     self.__cur_devices = cluster.get_devices()
                     options = {'c1': 0.5, 'c2': 0.5, 'w':0.1, 'k':len(self.__cur_devices), 'p':2}
                     # Call instance of PSO
-                    optimizer = ps.discrete.BinaryPSO(n_particles=100, dimensions=len(self.__cur_devices), options=options)
+                    optimizer = ps.discrete.BinaryPSO(n_particles=30, dimensions=len(self.__cur_devices), options=options)
                     # Perform optimization
                     _, result = optimizer.optimize(self.__fitness, iters=100)
                     for i in range(len(result)):
@@ -40,12 +47,22 @@ class WSN:
                         if(cluster.get_head().alive()):
                             d.send_data(Constants.MESSAGE_LENGTH,
                                         cluster.get_head())
-                    d.consume()
-            traces.append(self.__get_total_energy())
-            plotter.draw_devices()
-            plotter.draw_energy(self.__get_total_energy())
-        plotter.draw_traces(traces)
+                    d.stay()
+            self.__energy_trace.append(self.__get_total_energy())
+            self.__nodes_trace.append(self.__get_alive_nodes())
+        self.__running = False
         
+    def stop(self):
+        self.__running = False
+
+    def isRunning(self):
+        return self.__running
+
+    def is_alive(self):
+        return self.__get_total_energy() > 0.0
+
+    def getTraces(self):
+        return (self.__energy_trace, self.__nodes_trace)
 
     def __set_cluster_heads(self):
         for cluster in self.__clusters:
@@ -63,6 +80,14 @@ class WSN:
         for cluster in self.__clusters:
             energy += cluster.get_cluster_energy()
         return energy
+
+    def __get_alive_nodes(self):
+        nodes = 0
+        for cluster in self.__clusters:
+            for dev in cluster.get_devices():
+                if(dev.alive()):
+                    nodes += 1
+        return nodes 
 
     def __fit(self, m):
         total = 0.0
