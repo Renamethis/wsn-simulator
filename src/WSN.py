@@ -20,12 +20,13 @@ class WSN:
         for i in range(self.__max_iters):
             if(self.__get_total_energy() == 0.0):
                 break
+            #self.__set_cluster_heads()
             for cluster in self.__clusters:
                 if(pso):
                     self.__cur_devices = cluster.get_devices()
                     options = {'c1': 0.5, 'c2': 0.5, 'w':0.1, 'k':len(self.__cur_devices), 'p':2}
                     # Call instance of PSO
-                    optimizer = ps.discrete.BinaryPSO(n_particles=len(self.__cur_devices), dimensions=len(self.__cur_devices), options=options)
+                    optimizer = ps.discrete.BinaryPSO(n_particles=100, dimensions=len(self.__cur_devices), options=options)
                     # Perform optimization
                     _, result = optimizer.optimize(self.__fitness, iters=100)
                     for i in range(len(result)):

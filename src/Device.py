@@ -5,13 +5,13 @@ from random import random
 # Defined constants
 class Constants(float, Enum):
     # energy dissipated at the transceiver electronic
-    ENERGY = 50e-9
+    ENERGY = 50e-7
     # energy dissipated at the power amplifier (multi-path)
-    E_MP = 0.0013e-12 
+    E_MP = 0.0013e-10
     # energy dissipated at the power amplifier (line-of-sight)
-    E_FS = 10e-12
+    E_FS = 10e-10
     # energy dissipated at the data aggregation
-    E_DA = 5e-9
+    E_DA = 5e-7
     # energy dissipated at other electronics
     E_ED = 50e-5
     # default message length
