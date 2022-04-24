@@ -3,3 +3,5 @@ matplotlib
 numpy
 scikit-learn
 sklearn
+pyswarms
+tk
