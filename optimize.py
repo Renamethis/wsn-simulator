@@ -1,18 +1,10 @@
-from src.Device import Device, DeviceCluster
+from src.Device import Device, DeviceCluster, DeviceNetwork, Sensors
 from src.Simulator import Simulator
 from random import random
 from sklearn.cluster import KMeans
 import numpy as np
 from kneed import KneeLocator
 from sklearn.metrics import pairwise_distances
-
-# Safety substract
-def savesub(a, b):
-    return  a - b if (a - b > 0) else 0
-
-# Safety add
-def saveadd(a, b, max):
-    return a + b if (a + b < max) else max
 
 map_size = (500, 500)
 devices_amount = 50
@@ -63,5 +55,8 @@ for i in range(0, len(centers)):
 
 ### Simulate WSN network
 
-net = Simulator(clusters, 20000)
-net.mainloop()
+baseStation = Device((map_size[0]/2, map_size[1]/2), 
+                     sensor_type=Sensors.STATION)
+net = DeviceNetwork(clusters, baseStation, map_size)
+app = Simulator(net, 20000)
+app.mainloop()

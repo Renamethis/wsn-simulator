@@ -1,19 +1,19 @@
 from ast import Constant
 from enum import Enum, auto
-from math import sqrt
+from math import sqrt, log
 from random import random
 # Defined constants
 class Constants(float, Enum):
     # energy dissipated at the transceiver electronic
-    ENERGY = 50e-9
+    ENERGY = 50e-10
     # energy dissipated at the power amplifier (multi-path)
-    E_MP = 0.0013e-12
+    E_MP = 0.0013e-13
     # energy dissipated at the power amplifier (line-of-sight)
-    E_FS = 10e-9
+    E_FS = 10e-13
     # energy dissipated at the data aggregation
-    E_DA = 5e-7
+    E_DA = 5e-10
     # energy dissipated at other electronics
-    E_ED = 50e-5
+    E_ED = 50e-7
     # default message length
     MESSAGE_LENGTH = 2000
     # threshold distance value
@@ -21,7 +21,8 @@ class Constants(float, Enum):
 
 # Sensor types
 class Sensors(Enum):
-    DEFAULT = 0
+    DEFAULT = auto()
+    STATION = auto()
 
 # Device state
 class State(Enum):
@@ -33,7 +34,7 @@ class State(Enum):
 # WSN node class
 class Device:
 
-    def __init__(self, pos, energy=0.5, sensor_type=Sensors.DEFAULT):
+    def __init__(self, pos, energy=2, sensor_type=Sensors.DEFAULT):
         self.__pos = pos
         self.__initial_energy = self.__energy = energy
         self.__sensor_type = sensor_type
@@ -87,7 +88,7 @@ class Device:
 
     # Energy spent on aggregate message
     def aggregate(self, length):
-        self.consume(Constants.E_DA * length)
+        self.consume(Constants.E_DA * log(length))
 
     # Energy spent on other electronics
     def stay(self):
@@ -95,21 +96,15 @@ class Device:
 
     # Consume energy function
     def consume(self, energy):
-        if(energy > self.__energy):
-            self.__energy = 0
-        else:
-            self.__energy -= energy
+        if(self.__sensor_type != Sensors.STATION):
+            if(energy > self.__energy):
+                self.__energy = 0
+            else:
+                self.__energy -= energy
 
     # Reset energy device and state
     def reset(self):
         self.__energy = self.__initial_energy
-        if(self.__state == State.HEAD):
-            return
-        self.__state = State.ACTIVE
-
-    # Reset energy device and state 
-    def reset(self, energy):
-        self.__energy = energy
         if(self.__state == State.HEAD):
             return
         self.__state = State.ACTIVE
@@ -129,6 +124,7 @@ class DeviceCluster:
     # SETTERS
 
     def set_head(self, head):
+        self.__cluster_head.set_state(State.ACTIVE)
         self.__cluster_head = head
         self.__cluster_head.set_state(State.HEAD)
 
@@ -160,3 +156,18 @@ class DeviceCluster:
         return energy
 
 
+class DeviceNetwork:
+    def __init__(self, clusters, station, map_size):
+        self.__clusters = clusters
+        self.__station = station
+        self.__map_size = map_size
+
+    def get_clusters(self):
+        return self.__clusters
+
+    def get_station(self):
+        return self.__station
+    
+    def get_map_size(self):
+        return self.__map_size
+    
