@@ -2,8 +2,9 @@ from src.Device import Constants
 from src.PSO import PSO
 from threading import Thread
 from time import sleep
-
+import sys
 DEFAULT_TIME = 0.0001
+RESET_ITERS = 2000
 
 class WSN:
 
@@ -27,16 +28,17 @@ class WSN:
         for cluster in self.__clusters:
             for d in cluster.get_devices():
                 d.reset()
-        pso = PSO(self.__clusters)
+        optimizer = PSO(self.__clusters)
         for i in range(self.__max_iters):
             if(self.__get_total_energy() == 0.0 or not self.__running):
                 break
             self.__set_cluster_heads()
-            for cluster in self.__clusters:
-                if(pso):
-                    pso.optimize()
-                else:
-                   sleep(DEFAULT_TIME) 
+            if(pso):
+                optimizer.optimize()
+            else:
+                sleep(DEFAULT_TIME)
+            for j in range(len(self.__clusters)):
+                cluster = self.__clusters[j]
                 ### SEND DATA
                 for d in cluster.get_devices():
                     if(d is not cluster.get_head() and d.alive()):
@@ -49,6 +51,8 @@ class WSN:
                     d.stay()
             self.__energy_trace.append(self.__get_total_energy())
             self.__nodes_trace.append(self.__get_alive_nodes())
+            if((i + 1) % RESET_ITERS == 0):
+                optimizer.reset()
         self.__running = False
         
     def stop(self):

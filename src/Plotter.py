@@ -6,15 +6,14 @@ import matplotlib.image as mpimg
 from src.WSN import WSN
 from src.Device import State
 from threading import Thread
+from random import random
 
 class Plotter(FigureCanvasTkAgg):
 
-    def __init__(self, network, iters, root):
+    def __init__(self, root, button):
+        self.__button = button
         self.__root = root
         self.__simulation_number = 0
-        self.__network = WSN(network, iters)
-        self.__clusters = network.get_clusters()
-        self.__station = network.get_station()
         self.__figure = Figure()
         self.__axis = self.__figure.add_subplot(111)
         self.__gs = gridspec.GridSpec(1, 4)
@@ -23,34 +22,56 @@ class Plotter(FigureCanvasTkAgg):
         self.__energy_axis.set_visible(False)
         self.__nodes_axis.set_visible(False)
         self.__exit = False
-        
+        self.__is_draw_lock = True
         FigureCanvasTkAgg.__init__(self, self.__axis.figure, master=root)
         
         self.__station_image = mpimg.imread('resources/station.webp')
-        self.__img_props_full = [self.__savesub(self.__station.get_pos()[0]/network.get_map_size()[0], 0.05), 
-                self.__savesub(self.__station.get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
-        self.__img_props_part = [self.__savesub(0.5*self.__station.get_pos()[0]/network.get_map_size()[0], 0), 
-                self.__savesub(self.__station.get_pos()[1]/network.get_map_size()[1], 0.03), 0.06, 0.06]
-        self.__image_axes = self.__axis.figure.add_axes(self.__img_props_full, anchor='NE', zorder=1)
-        self.__image_axes.axis('off')
+        self.__props = None
 
-    def simulate(self, flag, button):
-        self.__button = button
+    def simulate(self, flag):
         self.__energy_axis.set_visible(False)
         self.__nodes_axis.set_visible(False)
-        self.__draw_station(self.__img_props_full)
+        self.__props = self.__img_props_full
+        self.__draw_station()
         self.__axis.set_position(self.__gs[0:4].get_position(self.__figure))
         self.__axis.set_subplotspec(self.__gs[0:4])
         self.__network.simulate(flag)
+        self.__is_draw_lock = True
         draw_thread = Thread(target=self.__draw_loop)
         draw_thread.start()
 
+    def set_network(self, network):
+        if(network is None):
+            self.__axis.cla()
+            self.__image_axes.cla()
+            self.__image_axes.axis('off')
+            self.draw()
+            return
+        self.__network = network
+        self.__clusters = network.get_clusters()
+        self.__station = network.get_station()
+        self.__props = self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
+        self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
+        self.__img_props_part = [self.__savesub(0.5*network.get_station().get_pos()[0]/network.get_map_size()[0], 0), 
+        self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.03), 0.06, 0.06]
+        self.__draw_station()
+        self.__draw_devices()
+        self.__button['state'] = 'normal'
+        self.__network = WSN(network, 20000)
+
     def isRunning(self):
-        return self.__network.isRunning()
+        try:
+            return self.__network.isRunning()
+        except AttributeError:
+            return False
 
     def stop(self):
         self.__exit = True
-        self.__network.stop()
+        try:
+            self.__is_draw_lock = False
+            self.__network.stop()
+        except AttributeError:
+            return
         
     def __draw_loop(self):
         self.__button["state"] = "disabled"
@@ -80,7 +101,8 @@ class Plotter(FigureCanvasTkAgg):
         self.__energy_axis.set_subplotspec(self.__gs[2:3])
         self.__nodes_axis.set_position(self.__gs[3:4].get_position(self.__figure))
         self.__nodes_axis.set_subplotspec(self.__gs[3:4])
-        self.__draw_station(self.__img_props_part)
+        self.__props = self.__img_props_part
+        self.__draw_station()
         self.__button["state"] = "normal"
         self.draw()
     
@@ -116,13 +138,17 @@ class Plotter(FigureCanvasTkAgg):
                                      fontsize=7)
                 energy += dev.get_energy()
         self.__axis.text(0, 0, str(energy), fontsize=15)
-        if(self.isRunning()):
+        if(self.__is_draw_lock):
             self.draw()
+        if(self.isRunning()):
             self.__root.update()
 
-    def __draw_station(self, props):
-        self.__image_axes.remove()
-        self.__image_axes = self.__axis.figure.add_axes(props, anchor='NE', zorder=1)
+    def __draw_station(self):
+        try:
+            self.__image_axes.remove()
+        except AttributeError:
+            pass
+        self.__image_axes = self.__axis.figure.add_axes(self.__props, anchor='NE', zorder=1)
         self.__image_axes.axis('off')
         self.__image_axes.imshow(self.__station_image)
         

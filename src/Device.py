@@ -2,6 +2,8 @@ from ast import Constant
 from enum import Enum, auto
 from math import sqrt, log
 from random import random
+from json import dump, load
+from json.decoder import JSONDecodeError
 # Defined constants
 class Constants(float, Enum):
     # energy dissipated at the transceiver electronic
@@ -13,7 +15,7 @@ class Constants(float, Enum):
     # energy dissipated at the data aggregation
     E_DA = 5e-10
     # energy dissipated at other electronics
-    E_ED = 50e-7
+    E_ED = 50e-6
     # default message length
     MESSAGE_LENGTH = 2000
     # threshold distance value
@@ -70,7 +72,7 @@ class Device:
     def send_data(self, length, receiver):
         if(self.__state == State.SLEEP):
             return
-        distance = self.__calculate_distance(receiver)
+        distance = self.calculate_distance(receiver)
         # Transmitter energy model 
         energy = Constants.ENERGY
         if(distance > Constants.THRESHOLD_DIST):
@@ -110,16 +112,22 @@ class Device:
         self.__state = State.ACTIVE
 
     # Calculate distance between two nodes
-    def __calculate_distance(self, node):
+    def calculate_distance(self, node):
         return sqrt((self.get_pos()[0] - node.get_pos()[0])**2 + (self.get_pos()[1] - 
             node.get_pos()[1])**2)
 
+    def calculate_distance_pos(self, pos):
+        return sqrt((pos[0] - pos[0])**2 + (pos[1] - 
+            pos[1])**2)
+
 class DeviceCluster:
 
-    def __init__(self, devices, head):
+    def __init__(self, devices, head, centroid):
         self.__devices = devices
         self.__cluster_head = head
+        self.__cluster_head.set_state(State.HEAD)
         self.__color = (random(), random(), random())
+        self.__centroid = centroid
     
     # SETTERS
 
@@ -129,6 +137,9 @@ class DeviceCluster:
         self.__cluster_head.set_state(State.HEAD)
 
     # GETTERS
+
+    def get_centroid(self):
+        return self.__centroid
 
     def get_devices(self):
         return self.__devices
@@ -155,7 +166,6 @@ class DeviceCluster:
                 energy += dev.get_initial_energy()
         return energy
 
-
 class DeviceNetwork:
     def __init__(self, clusters, station, map_size):
         self.__clusters = clusters
@@ -170,4 +180,52 @@ class DeviceNetwork:
     
     def get_map_size(self):
         return self.__map_size
+
+    def serialize(self, path):
+        data = {}
+        data['clusters'] = []
+        for i in range(len(self.__clusters)):
+            cluster = self.__clusters[i]
+            data['map_size'] = self.__map_size
+            data['clusters'].append({})
+            data['clusters'][i]['centroid'] = cluster.get_centroid().tolist()
+            data['clusters'][i]['head'] = {
+                'pos': cluster.get_head().get_pos(),
+                'initial_energy': cluster.get_head().get_initial_energy()
+            }
+            devices = [dev for dev in cluster.get_devices() if dev.get_state() != State.HEAD]
+            data['clusters'][i]['devices'] = []
+            for dev in devices:
+                data['clusters'][i]['devices'].append({
+                    'pos': dev.get_pos(),
+                    'initial_energy': dev.get_initial_energy()
+                })
+        data['station'] = {}
+        data['station']['pos'] = self.__station.get_pos()
+        with open(path, 'w') as f:
+            dump(data, f)
+
+    def deserialize(self, path):
+        with open(path, 'r') as f:
+            try:
+                data = load(f)
+                clusters = []
+                for cluster in data['clusters']:
+                    devices = [Device(dev['pos'], energy=dev['initial_energy']) for dev in cluster['devices']]
+                    head = Device(cluster['head']['pos'], energy=cluster['head']['initial_energy'])
+                    devices.append(head)
+                    centroid = cluster['centroid']
+                    loaded_cluster = DeviceCluster(devices, head, centroid)
+                    clusters.append(loaded_cluster)
+                self.__clusters = clusters
+                self.__station = Device(data['station']['pos'], 
+                                        sensor_type=Sensors.STATION)
+                self.__map_size = data['map_size']
+                return True
+            except JSONDecodeError:
+                return False
+            except KeyError:
+                return False
+            
+    
     
