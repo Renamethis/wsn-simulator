@@ -3,7 +3,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import gridspec as gridspec
 import matplotlib.image as mpimg
-from src.WSN import WSN
+from src.ClusterNetwork import ClusterNetwork
+from src.DirectCommunication import DirectCommunication
 from src.Device import State
 from threading import Thread
 from random import random
@@ -23,10 +24,12 @@ class Plotter(FigureCanvasTkAgg):
         self.__nodes_axis.set_visible(False)
         self.__exit = False
         self.__is_draw_lock = True
+
         FigureCanvasTkAgg.__init__(self, self.__axis.figure, master=root)
         
         self.__station_image = mpimg.imread('resources/station.webp')
         self.__props = None
+        self.__topology = False
 
     def simulate(self, flag):
         self.__energy_axis.set_visible(False)
@@ -40,24 +43,28 @@ class Plotter(FigureCanvasTkAgg):
         draw_thread = Thread(target=self.__draw_loop)
         draw_thread.start()
 
-    def set_network(self, network):
+    def set_network(self, network, topology):
+        self.__topology = topology
         if(network is None):
             self.__axis.cla()
             self.__image_axes.cla()
             self.__image_axes.axis('off')
             self.draw()
             return
-        self.__network = network
         self.__clusters = network.get_clusters()
         self.__station = network.get_station()
-        self.__props = self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
-        self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
-        self.__img_props_part = [self.__savesub(0.5*network.get_station().get_pos()[0]/network.get_map_size()[0], 0), 
+        if(self.__props is None):
+            self.__props = self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
+            self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
+            self.__img_props_part = [self.__savesub(0.5*network.get_station().get_pos()[0]/network.get_map_size()[0], 0), 
         self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.03), 0.06, 0.06]
         self.__draw_station()
         self.__draw_devices()
         self.__button['state'] = 'normal'
-        self.__network = WSN(network, 20000)
+        if(topology):
+            self.__network = ClusterNetwork(network, 50000)
+        else:
+            self.__network = DirectCommunication(network, 50000)
 
     def isRunning(self):
         try:
@@ -81,6 +88,7 @@ class Plotter(FigureCanvasTkAgg):
             self.__root.quit()
             return
         self.__draw_devices()
+        self.__props = self.__img_props_part
         energy_trace, nodes_trace = self.__network.getTraces()
         self.__simulation_number += 1
         self.__energy_axis.set_visible(True)
@@ -114,7 +122,12 @@ class Plotter(FigureCanvasTkAgg):
         for cluster in self.__clusters:
             for dev in cluster.get_devices():
                 devpos = dev.get_pos()
-                if(dev is cluster.get_head() and dev.alive()):
+                if(not self.__topology and dev.alive()):
+                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                             linestyle='None', markersize=7, color=(0, 1, 1))
+                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
+                                     fontsize=7)
+                elif(dev is cluster.get_head() and dev.alive()):
                     self.__axis.plot(devpos[0], devpos[1], marker='o', 
                              linestyle='None', markersize=7, color=(1, 0, 0))
                     self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 

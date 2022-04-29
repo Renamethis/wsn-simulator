@@ -18,16 +18,20 @@ class Dialog(object):
         self.__root = parent
         top = self.__top = tk.Toplevel(parent)
         self.__current_num = current_num
+        
         self.myLabel = tk.Label(top, text='Create or generate network?')
         self.myLabel.pack(ipady=10)
+        
         self.__x = tk.IntVar()
         self.__x.trace("w", lambda name, index, mode, sv=self.__x: self.__update_button(sv))
         self.__x_entry = LabelEntry(top, "Map Size X: ", textvariable=self.__x, width=3)
         self.__x_entry.pack(side=tk.TOP)
+        
         self.__y = tk.IntVar()
         self.__y.trace("w", lambda name, index, mode, sv=self.__y: self.__update_button(sv))
         self.__y_entry = LabelEntry(top, "Map Size Y: ", textvariable=self.__y, width=3)
         self.__y_entry.pack(side=tk.TOP)
+        
         self.__amount_devices = tk.IntVar()
         self.__amount_devices.trace("w", lambda name, index, mode, sv=self.__amount_devices: self.__update_button(sv))
         self.__amount_entry = LabelEntry(top, "Devices Amount: ", textvariable=self.__amount_devices, width=3)
@@ -101,7 +105,7 @@ class SideMenu(tk.Frame):
                                          height=1, command=self.__delete_network)
         self.__delete_button.pack(side=tk.RIGHT, anchor=tk.E)
         
-        self.__list_box = tk.Listbox(self, selectmode=tk.EXTENDED, height=10)
+        self.__list_box = tk.Listbox(self, selectmode=tk.EXTENDED, height=10, width=23)
         self.__list_box.pack(side=tk.TOP, anchor=tk.S)
         self.__list_box.bind('<<ListboxSelect>>', self.__select_network)
         self.__network = None
@@ -109,6 +113,11 @@ class SideMenu(tk.Frame):
 
     def get_network(self):
         return self.__network
+
+    def isSelected(self):
+        if(self.__list_box.curselection()):
+            return True
+        return False
 
     def __add_network(self):
         dialog = Dialog(self, self.__current_num)
@@ -148,11 +157,12 @@ class SideMenu(tk.Frame):
 
     def __select_network(self, evt):
         widget = evt.widget
-        name = widget.get(int(widget.curselection()[0])) + '.json'
-        net = DeviceNetwork(None, None, None)
-        if(net.deserialize('networks/' + name)):
-            self.__network = net
-            self.__root.set_plotter_network(self.__network)
-        else:
-            messagebox.showerror("Error", "Network is unreadable")
+        if(widget.curselection()):
+            name = widget.get(int(widget.curselection()[0])) + '.json'
+            net = DeviceNetwork(None, None, None)
+            if(net.deserialize('networks/' + name)):
+                self.__network = net
+                self.__root.set_plotter_network(self.__network)
+            else:
+                messagebox.showerror("Error", "Network is unreadable")
         

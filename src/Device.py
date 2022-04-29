@@ -9,17 +9,15 @@ class Constants(float, Enum):
     # energy dissipated at the transceiver electronic
     ENERGY = 50e-10
     # energy dissipated at the power amplifier (multi-path)
-    E_MP = 0.0013e-13
+    E_MP = 0.0013e-11
     # energy dissipated at the power amplifier (line-of-sight)
-    E_FS = 10e-13
+    E_FS = 10e-10
     # energy dissipated at the data aggregation
-    E_DA = 5e-10
+    E_DA = 5e-12
     # energy dissipated at other electronics
     E_ED = 50e-6
     # default message length
     MESSAGE_LENGTH = 2000
-    # threshold distance value
-    THRESHOLD_DIST = sqrt(E_FS/E_MP)
 
 # Sensor types
 class Sensors(Enum):
@@ -36,7 +34,8 @@ class State(Enum):
 # WSN node class
 class Device:
 
-    def __init__(self, pos, energy=2, sensor_type=Sensors.DEFAULT):
+    def __init__(self, pos, energy=2, sensor_type=Sensors.DEFAULT, coverage=50):
+        self.__coverage = coverage
         self.__pos = pos
         self.__initial_energy = self.__energy = energy
         self.__sensor_type = sensor_type
@@ -69,13 +68,13 @@ class Device:
         return self.__energy > 0.0
 
     # Calculate and sub transmitter energy consumption
-    def send_data(self, length, receiver):
+    def send_data(self, receiver, length=Constants.MESSAGE_LENGTH):
         if(self.__state == State.SLEEP):
             return
         distance = self.calculate_distance(receiver)
         # Transmitter energy model 
         energy = Constants.ENERGY
-        if(distance > Constants.THRESHOLD_DIST):
+        if(distance > self.__coverage):
             energy += Constants.E_MP*(distance**4)
         else:
             energy += Constants.E_FS*(distance**2)
@@ -117,7 +116,7 @@ class Device:
             node.get_pos()[1])**2)
 
     def calculate_distance_pos(self, pos):
-        return sqrt((pos[0] - pos[0])**2 + (pos[1] - 
+        return sqrt((self.get_pos()[0] - pos[0])**2 + (self.get_pos()[1] - 
             pos[1])**2)
 
 class DeviceCluster:
@@ -149,6 +148,9 @@ class DeviceCluster:
 
     def get_color(self):
         return self.__color
+
+    def get_alive_amount(self):
+        return sum([1 for device in self.get_devices() if device.alive()])
 
     # Return remaining energy in whole cluster
     def get_cluster_energy(self):

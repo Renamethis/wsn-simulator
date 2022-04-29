@@ -1,5 +1,4 @@
-from src.Simulator import Simulator
-### Simulate WSN network
+from src.MainWindow import MainWindow
 
-app = Simulator()
+app = MainWindow()
 app.mainloop()

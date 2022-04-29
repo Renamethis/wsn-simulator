@@ -10,12 +10,12 @@ def __fit(m, cluster):
     devices = cluster.get_devices()
     head = cluster.get_head()
     for i in range(0, len(m)):
-        if(m[i] == 0 and devices[i].get_energy() != 0.0 and devices[i].get_state() != State.SLEEP):
+        if(m[i] == 0 and devices[i].get_energy() != 0.0):
             totalEnergy+=devices[i].get_energy()
             range_distance += head.calculate_distance(devices[i])
         totaldistance += head.calculate_distance(devices[i])
         totalInitEnergy += devices[i].get_initial_energy()
-    return 0.6*totalEnergy/(totalInitEnergy) + 0.4*(1 - range_distance/totaldistance)
+    return 0.7*totalEnergy/(totalInitEnergy) + 0.3*(1 - range_distance/totaldistance)
 
 def fitness(genes, cluster):
     n_particles = genes.shape[0]
@@ -27,7 +27,7 @@ class PSO:
         self.__options = {'c1': 0.5, 'c2': 0.5, 'w':0.1, 'p':2}
         for cluster in clusters:
             self.__options['k'] = len(cluster.get_devices())
-            optimizer = ps.discrete.BinaryPSO(n_particles=len(
+            optimizer = ps.discrete.BinaryPSO(n_particles=4*len(
                                                 cluster.get_devices()
                                               ), 
                                               dimensions=len(
@@ -52,7 +52,9 @@ class PSO:
         '''
         for i in range(len(self.__clusters)):
             devices = self.__clusters[i].get_devices()
-            _, result = self.__optimizers[i].optimize(fitness, iters=100, verbose=False, cluster=self.__clusters[i])
+            _, result = self.__optimizers[i].optimize(fitness, iters=200,
+                                                      verbose=False, 
+                                                      cluster=self.__clusters[i])
             for i in range(len(result)):
                 if(result[i] == 0 and devices[i].get_state != State.HEAD):
                     devices[i].set_state(State.SLEEP)
