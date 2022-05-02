@@ -5,7 +5,6 @@ from matplotlib import gridspec as gridspec
 import matplotlib.image as mpimg
 from src.ClusterNetwork import ClusterNetwork
 from src.DirectCommunication import DirectCommunication
-from src.Device import State
 from threading import Thread
 from random import random
 
@@ -24,27 +23,26 @@ class Plotter(FigureCanvasTkAgg):
         self.__nodes_axis.set_visible(False)
         self.__exit = False
         self.__is_draw_lock = True
-
+        self.__color = None
         FigureCanvasTkAgg.__init__(self, self.__axis.figure, master=root)
-        
+        self.__state = False
         self.__station_image = mpimg.imread('resources/station.webp')
         self.__props = None
-        self.__topology = False
+        self.__routing = None
 
-    def simulate(self, flag):
+    def simulate(self, iters, speed, **kwargs):
         self.__energy_axis.set_visible(False)
         self.__nodes_axis.set_visible(False)
         self.__props = self.__img_props_full
         self.__draw_station()
         self.__axis.set_position(self.__gs[0:4].get_position(self.__figure))
         self.__axis.set_subplotspec(self.__gs[0:4])
-        self.__network.simulate(flag)
+        self.__network.simulate(iters, speed, **kwargs)
         self.__is_draw_lock = True
         draw_thread = Thread(target=self.__draw_loop)
         draw_thread.start()
 
-    def set_network(self, network, topology):
-        self.__topology = topology
+    def set_network(self, network, routing):
         if(network is None):
             self.__axis.cla()
             self.__image_axes.cla()
@@ -53,18 +51,23 @@ class Plotter(FigureCanvasTkAgg):
             return
         self.__clusters = network.get_clusters()
         self.__station = network.get_station()
-        if(self.__props is None):
-            self.__props = self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
-            self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
-            self.__img_props_part = [self.__savesub(0.5*network.get_station().get_pos()[0]/network.get_map_size()[0], 0), 
-        self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.03), 0.06, 0.06]
+        self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
+                                                    self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
+        self.__img_props_part = [0.5*network.get_station().get_pos()[0]/network.get_map_size()[0] + 0.015, 
+                        network.get_station().get_pos()[1]/network.get_map_size()[1] - 0.05, 0.06, 0.06]
+        if(not self.__state):
+            self.__props = self.__img_props_full
+        else:
+            self.__props = self.__img_props_part
+        self.__routing = routing
+        self.__button['state'] = 'normal'
+        if(routing == "LEACH"):
+            self.__network = ClusterNetwork(network)
+        else:
+            self.__network = DirectCommunication(network)
+            self.__color = (random(), random(), random())
         self.__draw_station()
         self.__draw_devices()
-        self.__button['state'] = 'normal'
-        if(topology):
-            self.__network = ClusterNetwork(network, 50000)
-        else:
-            self.__network = DirectCommunication(network, 50000)
 
     def isRunning(self):
         try:
@@ -72,15 +75,35 @@ class Plotter(FigureCanvasTkAgg):
         except AttributeError:
             return False
 
+    def clear(self):
+        if(not self.isRunning()):
+            self.__axis.cla()
+            self.__energy_axis.cla()
+            self.__nodes_axis.cla()
+            self.__image_axes.cla()
+            self.__image_axes.axis('off')
+            self.__simulation_number = 0
+            self.__energy_axis.set_visible(False)
+            self.__nodes_axis.set_visible(False)
+            self.__axis.set_position(self.__gs[0:4].get_position(self.__figure))
+            self.__axis.set_subplotspec(self.__gs[0:4])
+            self.__state = False
+            self.draw()
+
     def stop(self):
-        self.__exit = True
         try:
             self.__is_draw_lock = False
             self.__network.stop()
+            self.__draw_devices()
         except AttributeError:
             return
-        
+
+    def quit(self):
+        self.__exit = True
+        self.stop()
+
     def __draw_loop(self):
+        self.__state = False
         self.__button["state"] = "disabled"
         while self.__network.isRunning():
             self.__draw_devices()
@@ -97,11 +120,11 @@ class Plotter(FigureCanvasTkAgg):
         self.__nodes_axis.set_title("Number of alive nodes")
         self.__energy_axis.plot(energy_trace, 
                                 color=(random(), random(), random()), 
-                                label=str(self.__simulation_number))
-        self.__energy_axis.legend(loc="lower left")
+                                label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
+        self.__energy_axis.legend(loc="upper right")
         self.__nodes_axis.plot(nodes_trace, color=(random(), random(), random()),
-                               label=str(self.__simulation_number))
-        self.__nodes_axis.legend(loc="lower left")
+                               label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
+        self.__nodes_axis.legend(loc="upper right")
         # Replace subplots in canvas
         self.__axis.set_position(self.__gs[0:2].get_position(self.__figure))
         self.__axis.set_subplotspec(self.__gs[0:2])
@@ -113,6 +136,8 @@ class Plotter(FigureCanvasTkAgg):
         self.__draw_station()
         self.__button["state"] = "normal"
         self.draw()
+        self.__root.stop()
+        self.__state = True
     
     # Matplotlib draw devices and clusters
     def __draw_devices(self):
@@ -122,12 +147,12 @@ class Plotter(FigureCanvasTkAgg):
         for cluster in self.__clusters:
             for dev in cluster.get_devices():
                 devpos = dev.get_pos()
-                if(not self.__topology and dev.alive()):
+                if(self.__routing != "LEACH" and not dev.is_sleep() and dev.alive()):
                     self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                             linestyle='None', markersize=7, color=(0, 1, 1))
+                             linestyle='None', markersize=7, color=self.__color)
                     self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
                                      fontsize=7)
-                elif(dev is cluster.get_head() and dev.alive()):
+                elif(dev is cluster.get_head() and dev.alive() and dev.is_head()):
                     self.__axis.plot(devpos[0], devpos[1], marker='o', 
                              linestyle='None', markersize=7, color=(1, 0, 0))
                     self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 
@@ -137,7 +162,7 @@ class Plotter(FigureCanvasTkAgg):
                              linestyle='None', markersize=7, color=(0, 0, 0))
                     self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Dead", 
                              fontsize=7)
-                elif(dev.get_state() == State.ACTIVE):
+                elif(dev.is_active()):
                     self.__axis.plot(devpos[0], devpos[1], marker='o', 
                                      linestyle='None', markersize=7, 
                                      color=cluster.get_color())
@@ -150,7 +175,9 @@ class Plotter(FigureCanvasTkAgg):
                     self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
                                      fontsize=7)
                 energy += dev.get_energy()
-        self.__axis.text(0, 0, str(energy), fontsize=15)
+        self.__axis.text(-0.1, -0.1, "Total energy: " + str(energy), horizontalalignment='left',
+                         verticalalignment='center',
+                         transform = self.__axis.transAxes)
         if(self.__is_draw_lock):
             self.draw()
         if(self.isRunning()):

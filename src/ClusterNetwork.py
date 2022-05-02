@@ -3,23 +3,21 @@ from src.PSO import PSO
 from time import sleep
 from src.Simulation import Simulation
 from src.LEACH import LEACH
-from threading import Thread
-
 class ClusterNetwork(Simulation):
 
-    RESET_ITERS = 2000
-
-    def _simulation_loop(self, pso):
+    LEACH_ITERS = 1
+    def _simulation_loop(self, **kwargs):
         
         self._reset()
-        
-        optimizer = PSO(self._clusters)
-        leach = LEACH(self._clusters)
+        isPSO = kwargs['isPSO']
+        optimizer = PSO(clusters=self._clusters)
+        leach = LEACH(self._clusters, self._station)
         for i in range(self._max_iters):
             if(self._get_total_energy() == 0.0 or not self._running):
                 break
-            leach.process()
-            if(pso):
+            if(i%self.LEACH_ITERS == 0):
+                leach.process()
+            if(isPSO):
                 optimizer.optimize()
             else:
                 sleep(self.DEFAULT_TIME)
@@ -31,21 +29,13 @@ class ClusterNetwork(Simulation):
                         if(cluster.get_head().alive()):
                             d.send_data(cluster.get_head())
                     elif(d is cluster.get_head() and d.alive()):
-                        d.send_data(self._station)
+                        if(d.get_aggregation_size() > 0):
+                            d.send_data(self._station)
+                            d.aggregate()
+                        self._station.send_data(d)
                     d.stay()
             self._energy_trace.append(self._get_total_energy())
             self._nodes_trace.append(self._get_alive_nodes())
             if((i + 1) % self.RESET_ITERS == 0):
                 optimizer.reset()
         self._running = False
-        
-    def __set_cluster_heads(self):
-        for cluster in self._clusters:
-            energy = 0.0
-            maxEnergyDevice = None
-            for device in cluster.get_devices():
-                if(device is not cluster.get_head() and device.get_energy() > energy):
-                    energy = device.get_energy()
-                    maxEnergyDevice = device
-            if(maxEnergyDevice is not None):
-                cluster.set_head(maxEnergyDevice)

@@ -3,21 +3,25 @@ from threading import Thread
 class Simulation():
 
     DEFAULT_TIME = 0.0001
+    RESET_ITERS = 1000
 
-    def __init__(self, network, max_iters):
+    def __init__(self, network):
         self._clusters = network.get_clusters()
         self._station = network.get_station()
-        self._max_iters = max_iters
         self._energy_trace = []
         self._nodes_trace = []
         self._running = False
     
-    def simulate(self, pso):
+    def simulate(self, max_iters, speed, **kwargs):
+        for cluster in self._clusters:
+            for dev in cluster.get_devices():
+                dev.set_speed(speed)
+        self._max_iters = max_iters
         self._running = True
-        self.__thread = Thread(target=self._simulation_loop, args=((pso, )))
+        self.__thread = Thread(target=self._simulation_loop, kwargs=kwargs)
         self.__thread.start()
 
-    def _simulation__loop(self):
+    def _simulation__loop(self, **args):
         pass
 
     def _reset(self):
