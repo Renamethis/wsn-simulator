@@ -33,13 +33,13 @@ class MainWindow(tk.Tk):
         label.pack(side=tk.LEFT)
         
         self.__iters = tk.IntVar(value=20000)
-        self.__iters_slider = tk.Scale(iters_frame, from_=100, to=100000, orient=tk.HORIZONTAL, length=130, variable=self.__iters)
+        self.__iters_slider = tk.Scale(iters_frame, from_=100, to=200000, orient=tk.HORIZONTAL, length=130, variable=self.__iters)
         self.__iters_slider.pack(side=tk.LEFT, ipady=10)
         
         speed_frame = tk.Frame(self.__side_menu)
         speed_frame.pack(side=tk.TOP)
         
-        label = tk.Label(speed_frame, text="Simulation Speed: ")
+        label = tk.Label(speed_frame, text="Energy Consumption: ")
         label.pack(side=tk.LEFT)
         
         self.__speed = tk.IntVar(value=50)

@@ -3,7 +3,7 @@ from threading import Thread
 class Simulation():
 
     DEFAULT_TIME = 0.0001
-    RESET_ITERS = 1000
+    RESET_ITERS = 250
 
     def __init__(self, network):
         self._clusters = network.get_clusters()

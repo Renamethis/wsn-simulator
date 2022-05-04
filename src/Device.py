@@ -113,13 +113,13 @@ class Device:
             return
         distance = self.calculate_distance(receiver)
         # Transmitter energy model 
-        energy = Constants.ENERGY*self.__speed
+        energy = Constants.ENERGY
         if(distance > self.__coverage):
-            energy += Constants.E_MP*(distance**4)*self.__speed
+            energy += Constants.E_MP*(distance**4)
         else:
-            energy += Constants.E_FS*(distance**2)*self.__speed
+            energy += Constants.E_FS*(distance**2)
         energy *= length
-        self.consume(energy)
+        self.consume(energy * self.__speed)
         receiver.receive(length)
         if(self.__sensor_type != Sensors.STATION):
             receiver.add_data_to_aggregation(length)
@@ -177,6 +177,9 @@ class DeviceCluster:
         self.__cluster_head.set_state(State.ACTIVE)
         self.__cluster_head = head
         self.__cluster_head.set_state(State.HEAD)
+
+    def set_devices(self, devices):
+        self.__devices = devices
 
     # GETTERS
 

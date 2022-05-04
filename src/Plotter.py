@@ -50,6 +50,7 @@ class Plotter(FigureCanvasTkAgg):
             self.draw()
             return
         self.__clusters = network.get_clusters()
+        self.__devices = sum([cluster.get_devices() for cluster in self.__clusters], [])
         self.__station = network.get_station()
         self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
                                                     self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
@@ -144,37 +145,41 @@ class Plotter(FigureCanvasTkAgg):
         self.__axis.cla()
         self.__axis.set_title("Wireless Sensor Network")
         energy = 0.0
-        for cluster in self.__clusters:
-            for dev in cluster.get_devices():
-                devpos = dev.get_pos()
-                if(self.__routing != "LEACH" and not dev.is_sleep() and dev.alive()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                             linestyle='None', markersize=7, color=self.__color)
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
-                                     fontsize=7)
-                elif(dev is cluster.get_head() and dev.alive() and dev.is_head()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                             linestyle='None', markersize=7, color=(1, 0, 0))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 
-                                     fontsize=7)
-                elif(not dev.alive()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                             linestyle='None', markersize=7, color=(0, 0, 0))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Dead", 
-                             fontsize=7)
-                elif(dev.is_active()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                                     linestyle='None', markersize=7, 
-                                     color=cluster.get_color())
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
-                                     fontsize=7)
-                else:
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                                     linestyle='None', markersize=7, 
-                                     color=(0.5, 0.5, 0.5))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
-                                     fontsize=7)
-                energy += dev.get_energy()
+        for dev in self.__devices:
+            cluster = None
+            for c in self.__clusters:
+                if(dev in c.get_devices()):
+                    cluster = c
+                    break
+            devpos = dev.get_pos()
+            if(self.__routing != "LEACH" and not dev.is_sleep() and dev.alive()):
+                self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                            linestyle='None', markersize=7, color=self.__color)
+                self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
+                                    fontsize=7)
+            elif(dev is cluster.get_head() and dev.alive() and dev.is_head()):
+                self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                            linestyle='None', markersize=7, color=(1, 0, 0))
+                self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 
+                                    fontsize=7)
+            elif(not dev.alive()):
+                self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                            linestyle='None', markersize=7, color=(0, 0, 0))
+                self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Dead", 
+                            fontsize=7)
+            elif(dev.is_active()):
+                self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                                    linestyle='None', markersize=7, 
+                                    color=cluster.get_color())
+                self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
+                                    fontsize=7)
+            elif(dev.is_sleep()):
+                self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                                    linestyle='None', markersize=7, 
+                                    color=(0.5, 0.5, 0.5))
+                self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
+                                    fontsize=7)
+            energy += dev.get_energy()
         self.__axis.text(-0.1, -0.1, "Total energy: " + str(energy), horizontalalignment='left',
                          verticalalignment='center',
                          transform = self.__axis.transAxes)

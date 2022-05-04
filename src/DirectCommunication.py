@@ -15,7 +15,7 @@ class DirectCommunication(Simulation):
         
         self._reset()
         mte = MTE(self._devices, self._station)
-        pso = PSO(devices=self._devices)
+        pso = PSO(devices=self._devices, station=self._station)
         isMTE = kwargs['isMTE']
         isPSO = kwargs['isPSO']
         for i in range(self._max_iters):

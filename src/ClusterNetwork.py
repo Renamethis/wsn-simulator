@@ -1,4 +1,4 @@
-from src.Device import Constants
+from time import sleep
 from src.PSO import PSO
 from time import sleep
 from src.Simulation import Simulation
