@@ -3,20 +3,28 @@ from src.PSO import PSO
 from time import sleep
 from src.Simulation import Simulation
 from src.LEACH import LEACH
+from src.FCM import FCM
 class ClusterNetwork(Simulation):
 
     LEACH_ITERS = 1
     def _simulation_loop(self, **kwargs):
         
         self._reset()
+        routing = kwargs['routing']
         isPSO = kwargs['isPSO']
-        optimizer = PSO(clusters=self._clusters)
-        leach = LEACH(self._clusters, self._station)
+        if(isPSO):
+            optimizer = PSO(clusters=self._clusters)
+        if(routing == "LEACH"):
+            leach = LEACH(self._clusters, self._station)
+        elif(routing == "FCM"):
+            fcm = FCM(self._clusters)
         for i in range(self._max_iters):
             if(self._get_total_energy() == 0.0 or not self._running):
                 break
-            if(i%self.LEACH_ITERS == 0):
+            if(i%self.LEACH_ITERS == 0 and routing == "LEACH"):
                 leach.process()
+            elif(routing == "FCM"):
+                fcm.process()
             if(isPSO):
                 optimizer.optimize()
             else:
@@ -36,6 +44,6 @@ class ClusterNetwork(Simulation):
                     d.stay()
             self._energy_trace.append(self._get_total_energy())
             self._nodes_trace.append(self._get_alive_nodes())
-            if((i + 1) % self.RESET_ITERS == 0):
+            if(isPSO and (i + 1) % self.RESET_ITERS == 0):
                 optimizer.reset()
         self._running = False

@@ -181,6 +181,9 @@ class DeviceCluster:
     def set_devices(self, devices):
         self.__devices = devices
 
+    def set_centroid(self, centroid):
+        self.__centroid = centroid
+
     # GETTERS
 
     def get_centroid(self):

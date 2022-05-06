@@ -2,8 +2,9 @@ from random import random
 from re import L
 from xmlrpc.client import MAXINT
 import numpy as np
-import sys
+from sys import maxsize
 from random import shuffle
+
 class LEACH:
     
     def __init__(self, clusters, station, a=0.4, b=0.4, c=0.6):
@@ -25,7 +26,7 @@ class LEACH:
                 i = 0 if i + 1 == len(self.__devices) else i + 1
                 continue
             max_energy = 0.0
-            min_dist_station = sys.maxsize
+            min_dist_station = maxsize
             for dev in self.__devices:
                 if(dev.get_energy() > max_energy):
                     max_energy = dev.get_energy()
@@ -44,7 +45,7 @@ class LEACH:
         for head in heads:
             reorganized.append([])
         for dev in self.__devices:
-            min_dist = sys.maxsize
+            min_dist = maxsize
             k = -1
             for i in range(len(heads)):
                 head = heads[i]

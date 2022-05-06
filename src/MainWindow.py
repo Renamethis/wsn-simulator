@@ -17,7 +17,7 @@ class MainWindow(tk.Tk):
         
         self.__routing = tk.StringVar()
         self.__routing.trace("w", self.__switch_routing)
-        routings = ("Direct Communication", "MTE", "LEACH")
+        routings = ("Direct Communication", "MTE", "LEACH", "FCM")
         self.__routing.set(routings[0])
         self.__routing_menu = tk.OptionMenu(top_frame, self.__routing, 
                                             *routings)
@@ -77,9 +77,10 @@ class MainWindow(tk.Tk):
     def simulate(self):
         self.__clear_button.pack_forget()
         self.__stop_button.pack(side=tk.RIGHT)
-        if(self.__routing.get() == "LEACH"):
+        if(self.__routing.get() == "LEACH" or self.__routing.get() == "FCM"):
             self.__plotter.simulate(self.__iters.get(), self.__speed.get(),
-                                    isPSO=self.__check_flag.get())
+                                    isPSO=self.__check_flag.get(),
+                                    routing=self.__routing.get())
         else:
             self.__plotter.simulate(self.__iters.get(), self.__speed.get(), 
                                     isPSO=self.__check_flag.get(), 

@@ -7,7 +7,6 @@ class DirectCommunication(Simulation):
 
     def __init__(self, network):
         Simulation.__init__(self, network)
-        self._devices = sum([cluster.get_devices() for cluster in self._clusters], [])
         for d in self._devices:
             d.go_active()
 

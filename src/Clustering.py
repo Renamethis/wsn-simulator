@@ -23,6 +23,7 @@ class Clustering:
         self.__predictions = kmeans.predict(points)
         self.__centers = kmeans.cluster_centers_
 
+
     def clustering(self):
         clusters = []
         for i in range(0, len(self.__centers)):

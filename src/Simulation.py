@@ -11,6 +11,7 @@ class Simulation():
         self._energy_trace = []
         self._nodes_trace = []
         self._running = False
+        self._devices = sum([cluster.get_devices() for cluster in self._clusters], [])
     
     def simulate(self, max_iters, speed, **kwargs):
         for cluster in self._clusters:
@@ -46,13 +47,15 @@ class Simulation():
                     
     def _get_total_energy(self):
         energy = 0.0
-        for cluster in self._clusters:
+        clusters = self._clusters
+        for cluster in clusters:
             energy += cluster.get_cluster_energy()
         return energy
 
     def _get_alive_nodes(self):
         nodes = 0
-        for cluster in self._clusters:
+        clusters = self._clusters
+        for cluster in clusters:
             for dev in cluster.get_devices():
                 if(dev.alive()):
                     nodes += 1
