@@ -23,14 +23,14 @@ class FCM:
             min_dist = maxsize
             nearest = None
             for dev in devices:
-                if(dev.alive() and not dev.is_sleep()):
+                if(dev.alive() and dev.is_active()):
                     distance = dev.calculate_distance_pos(centroid)
                     if(distance < min_dist):
                         min_dist = distance
                     nearest = dev
             if(nearest is not None):
                 heads.append(nearest)
-                reorganized.append([])
+            reorganized.append([])
         new_clusters = [None for _ in self.__clusters]
 
         ccopy = centroids.copy().tolist()
@@ -55,9 +55,10 @@ class FCM:
         for i in range(len(devices)):
             dev = devices[i]
             id = np.argmax(membership[:, i])
+            
             reorganized[id].append(dev)
     
-        for i in range(len(reorganized)):
+        for i in range(len(heads)):
             self.__clusters[i].set_devices(reorganized[i])
             self.__clusters[i].set_centroid(centroids[i])
             self.__clusters[i].set_head(heads[i])

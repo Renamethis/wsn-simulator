@@ -70,6 +70,8 @@ class PSO:
         if(self.__optimizer is None):
                 for i in range(len(self.__clusters)):
                     devices = self.__clusters[i].get_devices()
+                    if(len(devices) == 0):
+                        continue
                     self.__options['k'] = len(devices)
                     optimizer = ps.discrete.BinaryPSO(n_particles=4*len(
                                                         devices
@@ -81,11 +83,11 @@ class PSO:
                     _, result = optimizer.optimize(fitness, iters=200,
                                                             verbose=False, 
                                                             cluster=self.__clusters[i])
-                for i in range(len(result)):
-                    if(result[i] == 0 and devices[i].get_state() != State.HEAD):
-                        devices[i].go_sleep()
-                    else:
-                        devices[i].go_active()
+                    for i in range(len(result)):
+                        if(result[i] == 0 and not devices[i].is_head()):
+                            devices[i].go_sleep()
+                        elif(result[i] == 1 and not devices[i].is_head()):
+                            devices[i].go_active()
         else:
             _, result = self.__optimizer.optimize(fitness, iters=500,
                                                         verbose=False, 

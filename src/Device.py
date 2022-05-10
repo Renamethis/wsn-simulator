@@ -1,4 +1,3 @@
-from ast import Constant
 from enum import Enum, auto
 from math import sqrt, log
 from random import random

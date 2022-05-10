@@ -119,6 +119,7 @@ class Plotter(FigureCanvasTkAgg):
         self.__energy_axis.set_title("Energy consupmtion")
         self.__nodes_axis.set_visible(True)
         self.__nodes_axis.set_title("Number of alive nodes")
+        print(self.__routing)
         self.__energy_axis.plot(energy_trace, 
                                 color=(random(), random(), random()), 
                                 label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
