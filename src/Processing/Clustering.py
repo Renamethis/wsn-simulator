@@ -3,7 +3,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 from kneed import KneeLocator
 from sklearn.metrics import pairwise_distances
-from src.Device import Device, DeviceCluster, DeviceNetwork, Sensors
+from src.Network.Cluster import DeviceCluster
 
 MAX_CLUSTER_AMOUNT = 10
 

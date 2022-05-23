@@ -1,6 +1,6 @@
 import tkinter  as tk
-from src.SideMenu import SideMenu
-from src.Plotter import Plotter
+from src.GUI.SideMenu import SideMenu
+from src.GUI.Plotter import Plotter
 
 class MainWindow(tk.Tk):
 
@@ -17,6 +17,7 @@ class MainWindow(tk.Tk):
         
         self.__routing = tk.StringVar()
         self.__routing.trace("w", self.__switch_routing)
+        
         routings = ("Direct Communication", "MTE", "LEACH", "FCM")
         self.__routing.set(routings[0])
         self.__routing_menu = tk.OptionMenu(top_frame, self.__routing, 
@@ -49,7 +50,8 @@ class MainWindow(tk.Tk):
         buttons_frame = tk.Frame(self.__side_menu)
         self.__simulate_button = tk.Button(buttons_frame, text="Simulate",
                                            width=6, height=1)
-        self.__plotter = Plotter(self, self.__simulate_button)
+        self.__plotter = Plotter(self)
+        self.__plotter.get_active().trace('w', self.__control_button)
         self.__plotter.get_tk_widget().pack(side=tk.TOP, anchor=tk.N, 
                                             fill=tk.BOTH, padx=10)
         self.__check_flag = tk.BooleanVar()
@@ -66,6 +68,7 @@ class MainWindow(tk.Tk):
         self.__stop_button = tk.Button(buttons_frame, text="Stop",
                                            width=4, height=1)
         self.__stop_button.config(command=self.stop)
+        self.__network = None
 
     def set_plotter_network(self, network):
         self.__network = network
@@ -99,6 +102,12 @@ class MainWindow(tk.Tk):
     def __clear(self):
         self.__side_menu.unselect()
         self.__plotter.clear()
+
+    def __control_button(self, *args):
+        if(self.__network is not None and self.__plotter.isRunning()):
+            self.__simulate_button['state'] = 'disabled'
+        else:
+            self.__simulate_button['state'] = 'active'
 
     def __close(self):
         if(self.__plotter.isRunning()):

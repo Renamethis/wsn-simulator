@@ -3,19 +3,22 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import gridspec as gridspec
 import matplotlib.image as mpimg
-from src.ClusterNetwork import ClusterNetwork
-from src.DirectCommunication import DirectCommunication
+from src.Routing.ClusterNetwork import ClusterNetwork
+from src.Routing.DirectCommunication import DirectCommunication
 from threading import Thread
 from random import random
 
 class Plotter(FigureCanvasTkAgg):
 
-    def __init__(self, root, button):
-        self.__button = button
+    def __init__(self, root):
+        #self.__button = button
         self.__root = root
         self.__simulation_number = 0
         self.__figure = Figure()
         self.__axis = self.__figure.add_subplot(111)
+        self.__axis.axis('off')
+        self.__axis.text(0.5, 0.5, "Choose Network", bbox=dict(facecolor='red', alpha=0.5), horizontalalignment='center',
+                         verticalalignment='center', transform=self.__axis.transAxes, size=30)
         self.__gs = gridspec.GridSpec(1, 4)
         self.__energy_axis = self.__figure.add_subplot(121)
         self.__nodes_axis = self.__figure.add_subplot(131)
@@ -29,6 +32,9 @@ class Plotter(FigureCanvasTkAgg):
         self.__station_image = mpimg.imread('resources/station.webp')
         self.__props = None
         self.__routing = None
+        self.__active = tk.BooleanVar()
+        self.__active.set(False)
+        self.get_tk_widget().bind('<Button-1>', self.__add_node)
 
     def simulate(self, iters, speed, **kwargs):
         self.__energy_axis.set_visible(False)
@@ -43,6 +49,7 @@ class Plotter(FigureCanvasTkAgg):
         draw_thread.start()
 
     def set_network(self, network, routing):
+        self.__active.set(True)
         if(network is None):
             self.__axis.cla()
             self.__image_axes.cla()
@@ -61,7 +68,6 @@ class Plotter(FigureCanvasTkAgg):
         else:
             self.__props = self.__img_props_part
         self.__routing = routing
-        self.__button['state'] = 'normal'
         if(routing == "LEACH" or routing == "FCM"):
             self.__network = ClusterNetwork(network)
         else:
@@ -75,6 +81,9 @@ class Plotter(FigureCanvasTkAgg):
             return self.__network.isRunning()
         except AttributeError:
             return False
+
+    def get_active(self):
+        return self.__active
 
     def clear(self):
         if(not self.isRunning()):
@@ -105,7 +114,7 @@ class Plotter(FigureCanvasTkAgg):
 
     def __draw_loop(self):
         self.__state = False
-        self.__button["state"] = "disabled"
+        self.__active.set(True)
         while self.__network.isRunning():
             self.__draw_devices()
         if(self.__exit):
@@ -119,7 +128,6 @@ class Plotter(FigureCanvasTkAgg):
         self.__energy_axis.set_title("Energy consupmtion")
         self.__nodes_axis.set_visible(True)
         self.__nodes_axis.set_title("Number of alive nodes")
-        print(self.__routing)
         self.__energy_axis.plot(energy_trace, 
                                 color=(random(), random(), random()), 
                                 label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
@@ -136,15 +144,16 @@ class Plotter(FigureCanvasTkAgg):
         self.__nodes_axis.set_subplotspec(self.__gs[3:4])
         self.__props = self.__img_props_part
         self.__draw_station()
-        self.__button["state"] = "normal"
         self.draw()
         self.__root.stop()
         self.__state = True
+        self.__active.set(False)
     
     # Matplotlib draw devices and clusters
     def __draw_devices(self):
         self.__axis.cla()
         self.__axis.set_title("Wireless Sensor Network")
+        self.__axis.axis('off')
         energy = 0.0
         for dev in self.__devices:
             cluster = None
@@ -198,7 +207,11 @@ class Plotter(FigureCanvasTkAgg):
         self.__image_axes = self.__axis.figure.add_axes(self.__props, anchor='NE', zorder=1)
         self.__image_axes.axis('off')
         self.__image_axes.imshow(self.__station_image)
-        
+    
+    def __add_node(self, event):
+        x, y = event.x, event.y
+        print(x, y)
+
     def __savesub(self, a, b):
         return a - b if a > b else 0
         

@@ -1,14 +1,13 @@
 from time import sleep
-from src.PSO import PSO
 from time import sleep
-from src.Simulation import Simulation
-from src.LEACH import LEACH
-from src.FCM import FCM
+from src.Routing.Simulation import Simulation
+from src.Processing.LEACH import LEACH
+from src.Processing.FCM import FCM
+from src.Processing.PSO import PSO
 class ClusterNetwork(Simulation):
 
     LEACH_ITERS = 1
     def _simulation_loop(self, **kwargs):
-        
         self._reset()
         routing = kwargs['routing']
         isPSO = kwargs['isPSO']

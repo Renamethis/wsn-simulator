@@ -1,8 +1,7 @@
 
 import pyswarms as ps
-from src.Device import State, Constant
-import sys
 from copy import copy 
+
 devices = None
 def __fit_cluster(m, cluster):
     active_energy = total_energy = 0.0
@@ -50,10 +49,16 @@ class PSO:
         try:
             self.__devices = kwargs['devices']
             self.__station = kwargs['station']
-        
+            self.__options['k'] = len(self.__devices)
+            self.__optimizer = ps.discrete.BinaryPSO(n_particles=4*len(
+                                                    self.__devices
+                                                ), 
+                                                dimensions=len(
+                                                    self.__devices
+                                                ), 
+                                                options=self.__options)
         except KeyError:
             for cluster in kwargs['clusters']:
-                self.__options['k'] = len(cluster.get_devices())
                 self.__options['k'] = len(cluster.get_devices())
                 optimizer = ps.discrete.BinaryPSO(n_particles=4*len(
                                                     cluster.get_devices()
@@ -73,14 +78,14 @@ class PSO:
                     if(len(devices) == 0):
                         continue
                     self.__options['k'] = len(devices)
-                    optimizer = ps.discrete.BinaryPSO(n_particles=4*len(
+                    optimizer = ps.discrete.BinaryPSO(n_particles=2*len(
                                                         devices
                                                     ), 
                                                     dimensions=len(
                                                         devices
                                                     ), 
                                                     options=self.__options)
-                    _, result = optimizer.optimize(fitness, iters=200,
+                    _, result = optimizer.optimize(fitness, iters=300,
                                                             verbose=False, 
                                                             cluster=self.__clusters[i])
                     for i in range(len(result)):

@@ -1,6 +1,6 @@
-from src.Simulation import Simulation
-from src.MTE import MTE
-from src.PSO import PSO
+from src.Routing.Simulation import Simulation
+from src.Processing.MTE import MTE
+from src.Processing.PSO import PSO
 from time import sleep
 
 class DirectCommunication(Simulation):

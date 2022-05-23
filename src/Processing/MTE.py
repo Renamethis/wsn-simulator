@@ -1,5 +1,6 @@
 
 from dijkstar import Graph, find_path
+
 class MTE:
     def __init__(self, devices, station):
         self.__devices = devices

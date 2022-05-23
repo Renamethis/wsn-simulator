@@ -1,7 +1,9 @@
 
-from src.Device import Device, DeviceNetwork, Sensors
-from src.Clustering import Clustering
+from src.Network.Device import Device, Sensors
+from src.Network.Network import DeviceNetwork
+from src.Processing.Clustering import Clustering
 import numpy as np
+
 class Generator:
     def __init__(self, map_size, devices_amount, initial_energy, coverage, station_pos):
         self.__map_size = map_size

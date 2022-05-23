@@ -1,7 +1,7 @@
 import skfuzzy
 import numpy as np
 from sklearn.metrics import max_error
-from src.Device import Device
+from src.Network.Device import Device
 from sys import maxsize
 
 class FCM:
