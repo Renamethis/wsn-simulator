@@ -5,3 +5,5 @@ scikit-learn
 sklearn
 pyswarms
 tk
+scikit-fuzzy
+dijkstar
