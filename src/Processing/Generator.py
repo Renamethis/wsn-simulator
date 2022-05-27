@@ -14,7 +14,7 @@ class Generator:
 
     def generate(self):
         self.__devices = []
-        for i in range(self.__devices_amount):
+        for _ in range(self.__devices_amount):
             current_position = [
                 np.random.uniform(0, self.__map_size[0]),
                 np.random.uniform(0, self.__map_size[1])

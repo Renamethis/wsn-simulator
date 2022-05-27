@@ -20,38 +20,57 @@ class Dialog(object):
         self.myLabel.pack(ipady=10)
         
         self.__x = tk.IntVar(value=300)
-        self.__x.trace("w", lambda name, index, mode, sv=self.__x: self.__update_button(sv))
-        self.__x_entry = LabelEntry(top, "Map Size X: ", textvariable=self.__x, width=4)
+        self.__x.trace("w", lambda name, index, mode, sv=self.__x: \
+            self.__update_button(sv))
+        self.__x_entry = LabelEntry(top, "Map Size X: ", 
+                                    textvariable=self.__x, width=4)
         self.__x_entry.pack(side=tk.TOP)
         
         self.__y = tk.IntVar(value=300)
-        self.__y.trace("w", lambda name, index, mode, sv=self.__y: self.__update_button(sv))
-        self.__y_entry = LabelEntry(top, "Map Size Y: ", textvariable=self.__y, width=4)
+        self.__y.trace("w", lambda name, index, mode, sv=self.__y: \
+            self.__update_button(sv))
+        self.__y_entry = LabelEntry(top, "Map Size Y: ", 
+                                    textvariable=self.__y, width=4)
         self.__y_entry.pack(side=tk.TOP)
         
         self.__bs_x = tk.IntVar(value=150)
-        self.__bs_x.trace("w", lambda name, index, mode, sv=self.__bs_x: self.__update_button(sv))
-        self.__bs_x_entry = LabelEntry(top, "Base Station Position X: ", textvariable=self.__bs_x, width=4)
+        self.__bs_x.trace("w", lambda name, index, mode, sv=self.__bs_x: \
+            self.__update_button(sv))
+        self.__bs_x_entry = LabelEntry(top, "Base Station Position X: ", 
+                                       textvariable=self.__bs_x, width=4)
         self.__bs_x_entry.pack(side=tk.TOP)
         
         self.__bs_y = tk.IntVar(value=150)
-        self.__bs_y.trace("w", lambda name, index, mode, sv=self.__bs_y: self.__update_button(sv))
-        self.__bs_y_entry = LabelEntry(top, "Base Station Position Y: ", textvariable=self.__bs_y, width=4)
+        self.__bs_y.trace("w", lambda name, index, mode, sv=self.__bs_y: \
+            self.__update_button(sv))
+        self.__bs_y_entry = LabelEntry(top, "Base Station Position Y: ", 
+                                       textvariable=self.__bs_y, width=4)
         self.__bs_y_entry.pack(side=tk.TOP)
         
         self.__amount_devices = tk.IntVar(value=30)
-        self.__amount_devices.trace("w", lambda name, index, mode, sv=self.__amount_devices: self.__update_button(sv))
-        self.__amount_entry = LabelEntry(top, "Devices Amount: ", textvariable=self.__amount_devices, width=4)
+        self.__amount_devices.trace("w", lambda name, index, mode, 
+                                    sv=self.__amount_devices: \
+                                        self.__update_button(sv))
+        self.__amount_entry = LabelEntry(top, "Devices Amount: ", 
+                                         textvariable=self.__amount_devices, 
+                                         width=4)
         self.__amount_entry.pack(side=tk.TOP)
         
         self.__initial_energy = tk.DoubleVar(value=2.0)
-        self.__initial_energy.trace("w", lambda name, index, mode, sv=self.__initial_energy: self.__update_button(sv))
-        self.__initial_entry = LabelEntry(top, "Device Initial Energy: ", textvariable=self.__initial_energy, width=4)
+        self.__initial_energy.trace("w", lambda name, index, mode, 
+                                    sv=self.__initial_energy: \
+                                        self.__update_button(sv))
+        self.__initial_entry = LabelEntry(top, "Device Initial Energy: ", 
+                                          textvariable=self.__initial_energy, 
+                                          width=4)
         self.__initial_entry.pack(side=tk.TOP)
         
         self.__coverage = tk.DoubleVar(value=25.0)
-        self.__coverage.trace("w", lambda name, index, mode, sv=self.__coverage: self.__update_button(sv))
-        self.__coverage_entry = LabelEntry(top, "Device Coverage: ", textvariable=self.__coverage, width=4)
+        self.__coverage.trace("w", lambda name, index, mode, 
+                              sv=self.__coverage: self.__update_button(sv))
+        self.__coverage_entry = LabelEntry(top, "Device Coverage: ", 
+                                           textvariable=self.__coverage, 
+                                           width=4)
         self.__coverage_entry.pack(side=tk.TOP)
         
         self.__gen_button = tk.Button(top, text='Generate', 
@@ -112,7 +131,11 @@ class Dialog(object):
             return
             
     def __generate(self):
-        generator = Generator((self.__x.get(), self.__y.get()), self.__amount_devices.get(), self.__initial_energy.get(), self.__coverage.get(), (self.__bs_x.get(), self.__bs_y.get()))
+        generator = Generator((self.__x.get(), self.__y.get()), 
+                               self.__amount_devices.get(), 
+                               self.__initial_energy.get(), 
+                               self.__coverage.get(), (self.__bs_x.get(), 
+                                                       self.__bs_y.get()))
         generator.generate()
         self.__network = generator.clustering()
         self.__network.serialize('networks/net' + str(self.__current_num) + '.json')
@@ -127,6 +150,7 @@ class Dialog(object):
         self.__root.get_root().deiconify()
         self.__top.deiconify()
         self.__top.destroy()
+        self.__root.load_networks()
 
     def get_network(self):
         return self.__network

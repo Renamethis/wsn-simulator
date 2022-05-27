@@ -1,12 +1,12 @@
-from src.Routing.Simulation import Simulation
+from src.Routing.Routing import Routing
 from src.Processing.MTE import MTE
 from src.Processing.PSO import PSO
 from time import sleep
 
-class DirectCommunication(Simulation):
+class DirectCommunication(Routing):
 
     def __init__(self, network):
-        Simulation.__init__(self, network)
+        Routing.__init__(self, network)
         for d in self._devices:
             d.go_active()
 

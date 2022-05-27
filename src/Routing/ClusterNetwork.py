@@ -1,10 +1,11 @@
 from time import sleep
 from time import sleep
-from src.Routing.Simulation import Simulation
+from src.Routing.Routing import Routing
 from src.Processing.LEACH import LEACH
 from src.Processing.FCM import FCM
 from src.Processing.PSO import PSO
-class ClusterNetwork(Simulation):
+
+class ClusterNetwork(Routing):
 
     LEACH_ITERS = 1
     def _simulation_loop(self, **kwargs):

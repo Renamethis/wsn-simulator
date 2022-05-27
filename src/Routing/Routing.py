@@ -1,6 +1,6 @@
 from threading import Thread
 
-class Simulation():
+class Routing:
 
     DEFAULT_TIME = 0.0001
     RESET_ITERS = 250

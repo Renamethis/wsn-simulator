@@ -12,11 +12,12 @@ class Clustering:
         self.__devices = devices
         points = [dev.get_pos() for dev in devices]
         sse = []
-        for k in range(1, MAX_CLUSTER_AMOUNT):
+        max_clusters = MAX_CLUSTER_AMOUNT if len(devices) >= MAX_CLUSTER_AMOUNT else len(devices)
+        for k in range(1, max_clusters):
             kmeans = KMeans(n_clusters=k)
             kmeans.fit(points)
             sse.append(kmeans.inertia_)
-        kl = KneeLocator(range(1, MAX_CLUSTER_AMOUNT), sse, curve="convex", 
+        kl = KneeLocator(range(1, max_clusters), sse, curve="convex", 
                         direction="decreasing")
         kmeans = KMeans(n_clusters=kl.elbow)
         kmeans.fit(points)

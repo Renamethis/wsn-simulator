@@ -53,6 +53,16 @@ class Device:
 
     def set_state(self, state):
         self.__state = state
+
+    def set_pos(self, pos):
+        self.__pos = pos
+
+    def set_coverage(self, coverage):
+        self.__coverage = coverage
+
+    def set_initial_energy(self, initial_energy):
+        self.__initial_energy = initial_energy
+
     ## GETTERS
     def get_coverage(self):
         return self.__coverage
@@ -87,6 +97,12 @@ class Device:
 
     def go_head(self):
         self.__state = State.HEAD
+    
+    def set_station(self):
+        self.__sensor_type = Sensors.STATION
+
+    def set_device(self):
+        self.__sensor_type = Sensors.DEFAULT
     
     def is_station(self):
         return self.__sensor_type == Sensors.STATION

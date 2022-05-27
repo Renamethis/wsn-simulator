@@ -25,7 +25,7 @@ class SideMenu(tk.Frame):
                                          height=1, command=self.__delete_network)
         self.__delete_button.pack(side=tk.RIGHT, anchor=tk.E)
         
-        self.__list_box = tk.Listbox(self, selectmode=tk.EXTENDED, height=10, width=33)
+        self.__list_box = tk.Listbox(self, height=10, width=33, selectmode="single")
         self.__list_box.pack(side=tk.TOP, anchor=tk.S)
         self.__list_box.bind('<<ListboxSelect>>', self.__select_network)
         self.__network = None
@@ -73,9 +73,10 @@ class SideMenu(tk.Frame):
                 self.__list_box.insert(item, filename[:filename.find(".json")])
                 item += 1
                 num = [s for s in filename if s.isdigit()]
-                num = int(''.join(num))
-                if(num > self.__current_num):
-                    self.__current_num = num
+                if(num):
+                    num = int(''.join(num))
+                    if(num > self.__current_num):
+                        self.__current_num = num
         self.__current_num += 1
 
     def get_root(self):

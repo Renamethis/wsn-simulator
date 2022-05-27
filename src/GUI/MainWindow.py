@@ -1,6 +1,6 @@
 import tkinter  as tk
 from src.GUI.SideMenu import SideMenu
-from src.GUI.Plotter import Plotter
+from src.GUI.Simulator import Simulator as Plotter
 
 class MainWindow(tk.Tk):
 
@@ -34,7 +34,9 @@ class MainWindow(tk.Tk):
         label.pack(side=tk.LEFT)
         
         self.__iters = tk.IntVar(value=20000)
-        self.__iters_slider = tk.Scale(iters_frame, from_=100, to=200000, orient=tk.HORIZONTAL, length=130, variable=self.__iters)
+        self.__iters_slider = tk.Scale(iters_frame, from_=100, to=200000, 
+                                       orient=tk.HORIZONTAL, length=130, 
+                                       variable=self.__iters)
         self.__iters_slider.pack(side=tk.LEFT, ipady=10)
         
         speed_frame = tk.Frame(self.__side_menu)
@@ -44,7 +46,9 @@ class MainWindow(tk.Tk):
         label.pack(side=tk.LEFT)
         
         self.__speed = tk.IntVar(value=50)
-        self.__speed_slider = tk.Scale(speed_frame, from_=1, to=100, orient=tk.HORIZONTAL, length=130, variable=self.__speed)
+        self.__speed_slider = tk.Scale(speed_frame, from_=1, to=100, 
+                                       orient=tk.HORIZONTAL, length=130, 
+                                       variable=self.__speed)
         self.__speed_slider.pack(side=tk.LEFT, ipady=10)
         
         buttons_frame = tk.Frame(self.__side_menu)

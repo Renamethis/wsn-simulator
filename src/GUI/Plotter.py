@@ -1,217 +1,178 @@
 import tkinter as tk
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib import gridspec as gridspec
 import matplotlib.image as mpimg
 from src.Routing.ClusterNetwork import ClusterNetwork
 from src.Routing.DirectCommunication import DirectCommunication
-from threading import Thread
 from random import random
 
 class Plotter(FigureCanvasTkAgg):
 
     def __init__(self, root):
-        #self.__button = button
-        self.__root = root
-        self.__simulation_number = 0
-        self.__figure = Figure()
-        self.__axis = self.__figure.add_subplot(111)
-        self.__axis.axis('off')
-        self.__axis.text(0.5, 0.5, "Choose Network", bbox=dict(facecolor='red', alpha=0.5), horizontalalignment='center',
-                         verticalalignment='center', transform=self.__axis.transAxes, size=30)
-        self.__gs = gridspec.GridSpec(1, 4)
-        self.__energy_axis = self.__figure.add_subplot(121)
-        self.__nodes_axis = self.__figure.add_subplot(131)
-        self.__energy_axis.set_visible(False)
-        self.__nodes_axis.set_visible(False)
-        self.__exit = False
+        #self._button = button
+        self._root = root
+        self._simulation_number = 0
+        self._figure = Figure()
+        self._axis = self._figure.add_subplot(111)
+        #self._axis.axis('off')
+        self._exit = False
         self.__is_draw_lock = True
-        self.__color = None
-        FigureCanvasTkAgg.__init__(self, self.__axis.figure, master=root)
-        self.__state = False
-        self.__station_image = mpimg.imread('resources/station.webp')
-        self.__props = None
-        self.__routing = None
-        self.__active = tk.BooleanVar()
-        self.__active.set(False)
-        self.get_tk_widget().bind('<Button-1>', self.__add_node)
-
-    def simulate(self, iters, speed, **kwargs):
-        self.__energy_axis.set_visible(False)
-        self.__nodes_axis.set_visible(False)
-        self.__props = self.__img_props_full
-        self.__draw_station()
-        self.__axis.set_position(self.__gs[0:4].get_position(self.__figure))
-        self.__axis.set_subplotspec(self.__gs[0:4])
-        self.__network.simulate(iters, speed, **kwargs)
-        self.__is_draw_lock = True
-        draw_thread = Thread(target=self.__draw_loop)
-        draw_thread.start()
+        self._color = None
+        FigureCanvasTkAgg.__init__(self, self._axis.figure, master=root)
+        self._state = False
+        self._station_image = mpimg.imread('resources/station.webp')
+        self._props = None
+        self._routing = None
+        self._active = tk.BooleanVar()
+        self._axis.set_xlim([0, 300])
+        self._axis.set_ylim([0, 300])
+        self._active.set(False)
+        self._image_axes = None
+        self._axis.figure.subplots_adjust(left=0.00,
+                    bottom=0.00, 
+                    right=1.0, 
+                    top=1.0, 
+                    wspace=0.25, 
+                    hspace=0.0)
+        self._axis.axis('off')
+        
 
     def set_network(self, network, routing):
-        self.__active.set(True)
+        self._active.set(True)
         if(network is None):
-            self.__axis.cla()
-            self.__image_axes.cla()
-            self.__image_axes.axis('off')
+            self._axis.cla()
+            self._image_axes.cla()
+            self._image_axes.axis('off')
             self.draw()
             return
-        self.__clusters = network.get_clusters()
-        self.__devices = sum([cluster.get_devices() for cluster in self.__clusters], [])
-        self.__station = network.get_station()
-        self.__img_props_full = [self.__savesub(network.get_station().get_pos()[0]/network.get_map_size()[0], 0.05), 
-                                                    self.__savesub(network.get_station().get_pos()[1]/network.get_map_size()[1], 0.05), 0.1, 0.1]
-        self.__img_props_part = [0.5*network.get_station().get_pos()[0]/network.get_map_size()[0] + 0.015, 
-                        network.get_station().get_pos()[1]/network.get_map_size()[1] - 0.05, 0.06, 0.06]
-        if(not self.__state):
-            self.__props = self.__img_props_full
-        else:
-            self.__props = self.__img_props_part
-        self.__routing = routing
+        self._clusters = network.get_clusters()
+        self._devices = sum([cluster.get_devices() for cluster in self._clusters], [])
+        self._station = network.get_station()
+        self.__map_size = network.get_map_size()
+        self._axis.set_xlim([0, self.__map_size[0]])
+        self._axis.set_ylim([0, self.__map_size[1]])
+        if(self._station is not None):
+            self._img_props_full = [self._savesub(network.get_station().get_pos()[0]/self.__map_size[0], 0.05), 
+                                                        self._savesub(network.get_station().get_pos()[1]/self.__map_size[1], 0.05), 0.1, 0.1]
+            self._img_props_part = [0.5*network.get_station().get_pos()[0]/self.__map_size[0] + 0.015, 
+                            network.get_station().get_pos()[1]/self.__map_size[1] - 0.05, 0.06, 0.06]
+            if(not self._state):
+                self._props = self._img_props_full
+            else:
+                self._props = self._img_props_part
+        self._routing = routing
         if(routing == "LEACH" or routing == "FCM"):
-            self.__network = ClusterNetwork(network)
+            self._network = ClusterNetwork(network)
         else:
-            self.__network = DirectCommunication(network)
-            self.__color = (random(), random(), random())
-        self.__draw_station()
-        self.__draw_devices()
-
-    def isRunning(self):
-        try:
-            return self.__network.isRunning()
-        except AttributeError:
-            return False
-
-    def get_active(self):
-        return self.__active
+            self._network = DirectCommunication(network)
+            self._color = (random(), random(), random())
+        self._draw_station()
+        self._draw_devices()
 
     def clear(self):
         if(not self.isRunning()):
-            self.__axis.cla()
-            self.__energy_axis.cla()
-            self.__nodes_axis.cla()
-            self.__image_axes.cla()
-            self.__image_axes.axis('off')
-            self.__simulation_number = 0
-            self.__energy_axis.set_visible(False)
-            self.__nodes_axis.set_visible(False)
-            self.__axis.set_position(self.__gs[0:4].get_position(self.__figure))
-            self.__axis.set_subplotspec(self.__gs[0:4])
-            self.__state = False
+            self._axis.cla()
+            self._energy_axis.cla()
+            self._nodes_axis.cla()
+            self._image_axes.cla()
+            self._image_axes.axis('off')
+            self._simulation_number = 0
+            self._energy_axis.set_visible(False)
+            self._nodes_axis.set_visible(False)
+            self._axis.set_position(self._gs[0:4].get_position(self._figure))
+            self._axis.set_subplotspec(self._gs[0:4])
+            self._state = False
             self.draw()
 
-    def stop(self):
+    def isRunning(self):
         try:
-            self.__is_draw_lock = False
-            self.__network.stop()
-            self.__draw_devices()
+            return self._network.isRunning()
         except AttributeError:
-            return
+            return False
+
+    '''    def set_size(self, size):    
+        l = self._axis.figure.subplotpars.left
+        r = self._axis.figure.subplotpars.right
+        t = self._axis.figure.subplotpars.top
+        b = self._axis.figure.subplotpars.bottom
+        figw = float(size[0])/(r-l)
+        figh = float(size[1])/(t-b)
+        print(figw, figh)
+        self._axis.figure.set_size_inches(figw, figh)
+    '''
 
     def quit(self):
-        self.__exit = True
+        self._exit = True
         self.stop()
-
-    def __draw_loop(self):
-        self.__state = False
-        self.__active.set(True)
-        while self.__network.isRunning():
-            self.__draw_devices()
-        if(self.__exit):
-            self.__root.quit()
-            return
-        self.__draw_devices()
-        self.__props = self.__img_props_part
-        energy_trace, nodes_trace = self.__network.getTraces()
-        self.__simulation_number += 1
-        self.__energy_axis.set_visible(True)
-        self.__energy_axis.set_title("Energy consupmtion")
-        self.__nodes_axis.set_visible(True)
-        self.__nodes_axis.set_title("Number of alive nodes")
-        self.__energy_axis.plot(energy_trace, 
-                                color=(random(), random(), random()), 
-                                label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
-        self.__energy_axis.legend(loc="upper right")
-        self.__nodes_axis.plot(nodes_trace, color=(random(), random(), random()),
-                               label=''.join([c for c in self.__routing if c.isupper()]) + str(self.__simulation_number))
-        self.__nodes_axis.legend(loc="upper right")
-        # Replace subplots in canvas
-        self.__axis.set_position(self.__gs[0:2].get_position(self.__figure))
-        self.__axis.set_subplotspec(self.__gs[0:2])
-        self.__energy_axis.set_position(self.__gs[2:3].get_position(self.__figure))
-        self.__energy_axis.set_subplotspec(self.__gs[2:3])
-        self.__nodes_axis.set_position(self.__gs[3:4].get_position(self.__figure))
-        self.__nodes_axis.set_subplotspec(self.__gs[3:4])
-        self.__props = self.__img_props_part
-        self.__draw_station()
-        self.draw()
-        self.__root.stop()
-        self.__state = True
-        self.__active.set(False)
     
     # Matplotlib draw devices and clusters
-    def __draw_devices(self):
-        self.__axis.cla()
-        self.__axis.set_title("Wireless Sensor Network")
-        self.__axis.axis('off')
+    def _draw_devices(self):
+        self._axis.cla()
+        self._axis.set_title("Wireless Sensor Network")
+        self._axis.axis('off')
+        self._axis.set_xlim([0, self.__map_size[0]])
+        self._axis.set_ylim([0, self.__map_size[1]])
         energy = 0.0
-        for dev in self.__devices:
+        for dev in self._devices:
             cluster = None
-            for c in self.__clusters:
+            for c in self._clusters:
                 if(dev in c.get_devices()):
                     cluster = c
                     break
             if(cluster is not None):
                 devpos = dev.get_pos()
-                if(self.__routing != "LEACH" and self.__routing != "FCM" and not dev.is_sleep() and dev.alive()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
-                                linestyle='None', markersize=7, color=self.__color)
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
+                if(self._routing != "LEACH" and self._routing != "FCM" and not dev.is_sleep() and dev.alive()):
+                    self._axis.plot(devpos[0], devpos[1], marker='o', 
+                                linestyle='None', markersize=7, color=self._color)
+                    self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
                                         fontsize=7)
                 elif(dev is cluster.get_head() and dev.alive() and dev.is_head()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                    self._axis.plot(devpos[0], devpos[1], marker='o', 
                                 linestyle='None', markersize=7, color=(1, 0, 0))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 
+                    self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "CH", 
                                         fontsize=7)
                 elif(not dev.alive()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                    self._axis.plot(devpos[0], devpos[1], marker='o', 
                                 linestyle='None', markersize=7, color=(0, 0, 0))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Dead", 
+                    self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Dead", 
                                 fontsize=7)
                 elif(dev.is_active()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                    self._axis.plot(devpos[0], devpos[1], marker='o', 
                                         linestyle='None', markersize=7, 
                                         color=cluster.get_color())
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
+                    self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Device", 
                                         fontsize=7)
                 elif(dev.is_sleep()):
-                    self.__axis.plot(devpos[0], devpos[1], marker='o', 
+                    self._axis.plot(devpos[0], devpos[1], marker='o', 
                                         linestyle='None', markersize=7, 
                                         color=(0.5, 0.5, 0.5))
-                    self.__axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
+                    self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
                                         fontsize=7)
+                else:
+                    print(dev.get_state())
                 energy += dev.get_energy()
-        self.__axis.text(-0.1, -0.1, "Total energy: " + str(energy), horizontalalignment='left',
+        self._axis.text(-0.1, -0.1, "Total energy: " + str(energy), horizontalalignment='left',
                          verticalalignment='center',
-                         transform = self.__axis.transAxes)
+                         transform = self._axis.transAxes)
         if(self.__is_draw_lock):
             self.draw()
         if(self.isRunning()):
-            self.__root.update()
+            self._root.update()
 
-    def __draw_station(self):
-        try:
-            self.__image_axes.remove()
-        except AttributeError:
-            pass
-        self.__image_axes = self.__axis.figure.add_axes(self.__props, anchor='NE', zorder=1)
-        self.__image_axes.axis('off')
-        self.__image_axes.imshow(self.__station_image)
-    
-    def __add_node(self, event):
-        x, y = event.x, event.y
-        print(x, y)
+    def _draw_station(self):
+        if(self._station is not None):
+            try:
+                self._image_axes.remove()
+            except AttributeError:
+                pass
+            self._image_axes = self._axis.figure.add_axes(self._props, anchor='NE', zorder=1)
+            self._image_axes.axis('off')
+            self._image_axes.imshow(self._station_image)
+            self._image_axes.set_visible(True)
+        elif(self._image_axes is not None):
+            self._image_axes.set_visible(False)
 
-    def __savesub(self, a, b):
+    def _savesub(self, a, b):
         return a - b if a > b else 0
         
