@@ -1,6 +1,6 @@
 # WSN Simulator
 A wireless sensor network simulator is software for conducting simulation processes that use different routing methods and optimization techniques with real-time device status display. 
-## Протоколы маршрутизации
+## Routing protocols
 This software supports four different routing schemes:
 - Direct Communication. In this mode, each node sends information directly to the base station.
 - MTE. Each node sends information through other nodes along the shortest path to the base station, which is calculated by Dijkstra's algorithm.
@@ -9,7 +9,18 @@ This software supports four different routing schemes:
 ## Sleep scheduling system
 For each routing scheme, a sleep scheduling system based on the particle swarm method is provided, which allows some nodes in the network to periodically move to sleep. The calculation is based on the given fitness function and energy values, coordinates and other device parameters.
 ## Requirements
+- Python 3.8
+### Libraries
+- knead
+- matplotlib
+- numpy
+- scikit-learn
+- pyswarms
+- tkinter
+- scikit-fuzzy
+- dijkstar
 ## Install and Run
+### Linux Operating Systems
 Install
 
 ```bash
