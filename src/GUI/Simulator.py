@@ -10,9 +10,9 @@ class Simulator(Plotter):
     def __init__(self, root):
         Plotter.__init__(self, root)
         self.__gs = gridspec.GridSpec(1, 4)
-        self.__energy_axis = self._figure.add_subplot(121)
+        self._energy_axis = self._figure.add_subplot(121)
         self.__nodes_axis = self._figure.add_subplot(131)
-        self.__energy_axis.set_visible(False)
+        self._energy_axis.set_visible(False)
         self.__nodes_axis.set_visible(False)
         self._axis.text(0.5, 0.5, "Choose Network", bbox=dict(facecolor='red', alpha=0.5), horizontalalignment='center',
                     verticalalignment='center', transform=self._axis.transAxes, size=30)
@@ -58,22 +58,22 @@ class Simulator(Plotter):
         self._props = self._img_props_part
         energy_trace, nodes_trace = self._network.getTraces()
         self._simulation_number += 1
-        self.__energy_axis.set_visible(True)
-        self.__energy_axis.set_title("Energy consupmtion")
+        self._energy_axis.set_visible(True)
+        self._energy_axis.set_title("Energy consupmtion")
         self.__nodes_axis.set_visible(True)
         self.__nodes_axis.set_title("Number of alive nodes")
-        self.__energy_axis.plot(energy_trace, 
+        self._energy_axis.plot(energy_trace, 
                                 color=(random(), random(), random()), 
                                 label=''.join([c for c in self._routing if c.isupper()]) + str(self._simulation_number))
-        self.__energy_axis.legend(loc="center right")
+        self._energy_axis.legend(loc="center right")
         self.__nodes_axis.plot(nodes_trace, color=(random(), random(), random()),
                                label=''.join([c for c in self._routing if c.isupper()]) + str(self._simulation_number))
         self.__nodes_axis.legend(loc="center right")
         # Replace subplots in canvas
         self._axis.set_position(self.__gs[0:2].get_position(self._figure))
         self._axis.set_subplotspec(self.__gs[0:2])
-        self.__energy_axis.set_position(self.__gs[2:3].get_position(self._figure))
-        self.__energy_axis.set_subplotspec(self.__gs[2:3])
+        self._energy_axis.set_position(self.__gs[2:3].get_position(self._figure))
+        self._energy_axis.set_subplotspec(self.__gs[2:3])
         self.__nodes_axis.set_position(self.__gs[3:4].get_position(self._figure))
         self.__nodes_axis.set_subplotspec(self.__gs[3:4])
         self._props = self._img_props_part

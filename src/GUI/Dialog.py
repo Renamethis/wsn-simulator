@@ -138,7 +138,7 @@ class Dialog(object):
                                                        self.__bs_y.get()))
         generator.generate()
         self.__network = generator.clustering()
-        self.__network.serialize('networks/net' + str(self.__current_num) + '.json')
+        self.__network.save('networks/net' + str(self.__current_num) + '.json')
         self.__root.load_networks()
         self.__top.destroy()
 

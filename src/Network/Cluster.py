@@ -3,11 +3,14 @@ from src.Network.Device import State
 
 class DeviceCluster:
 
-    def __init__(self, devices, head, centroid):
+    def __init__(self, devices, head, centroid, color=None):
         self.__devices = devices
         self.__cluster_head = head
         self.__cluster_head.set_state(State.HEAD)
-        self.__color = (random(), random(), random())
+        if(color is None):
+            self.__color = (random(), random(), random())
+        else:
+            self.__color = color
         self.__centroid = centroid
     
     # SETTERS

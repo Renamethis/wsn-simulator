@@ -66,7 +66,7 @@ class Plotter(FigureCanvasTkAgg):
             self._network = ClusterNetwork(network)
         else:
             self._network = DirectCommunication(network)
-            self._color = (random(), random(), random())
+            self._color = network.get_color()
         self._draw_station()
         self._draw_devices()
 
@@ -149,8 +149,6 @@ class Plotter(FigureCanvasTkAgg):
                                         color=(0.5, 0.5, 0.5))
                     self._axis.text(devpos[0] + 0.5, devpos[1] + 0.5, "Sleep", 
                                         fontsize=7)
-                else:
-                    print(dev.get_state())
                 energy += dev.get_energy()
         self._axis.text(-0.1, -0.1, "Total energy: " + str(energy), horizontalalignment='left',
                          verticalalignment='center',

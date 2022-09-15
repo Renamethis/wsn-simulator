@@ -87,7 +87,7 @@ class SideMenu(tk.Frame):
         if(widget.curselection()):
             name = widget.get(int(widget.curselection()[0])) + '.json'
             net = DeviceNetwork(None, None, None)
-            if(net.deserialize('networks/' + name)):
+            if(net.load('networks/' + name)):
                 self.__network = net
                 self.__root.set_plotter_network(self.__network)
             else:
