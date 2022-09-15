@@ -62,9 +62,9 @@ class FCM:
             self.__clusters[i].set_centroid(centroids[i])
             self.__clusters[i].set_head(heads[i])
 
-        self.head_rotation()
+        self.select_head()
 
-    def head_rotation(self):
+    def select_head(self):
         for i in range(len(self.__clusters)):
             if(self.__clusters[i] is None):
                 continue
