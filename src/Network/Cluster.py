@@ -26,6 +26,9 @@ class DeviceCluster:
     def set_centroid(self, centroid):
         self.__centroid = centroid
 
+    def set_color(self, color):
+        self.__color = color
+
     # GETTERS
 
     def get_centroid(self):

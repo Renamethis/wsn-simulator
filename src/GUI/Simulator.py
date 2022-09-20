@@ -24,7 +24,7 @@ class Simulator(Plotter):
                     hspace=0.0)
 
     def simulate(self, iters, speed, **kwargs):
-        self.__energy_axis.set_visible(False)
+        self._energy_axis.set_visible(False)
         self.__nodes_axis.set_visible(False)
         self._props = self._img_props_full
         self._draw_station()

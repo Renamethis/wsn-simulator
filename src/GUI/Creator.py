@@ -6,6 +6,7 @@ from src.Network.Device import Device
 from src.Processing.Clustering import Clustering
 from src.Network.Network import DeviceNetwork
 from src.Network.Cluster import DeviceCluster
+from random import random
 
 class Creator(tk.Toplevel):
     DEFAULT_PARAMETERS = [
@@ -94,6 +95,7 @@ class Creator(tk.Toplevel):
         self.__network = None
         self.__isSetting = False
         self.__current_index = 0
+        self.__colors = []
 
     def __validate(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type, widget_name):
@@ -184,16 +186,23 @@ class Creator(tk.Toplevel):
         if(len(self.__devices) > 5):
             clustering = Clustering(devices)
             clusters = clustering.clustering()
+            for i in range(len(clusters)):
+                if(i < len(self.__colors)):
+                    self.__colors.append((random(), random(), random()))
+                clusters[i].set_color(self.__colors[i])
             self.__network = DeviceNetwork(clusters, self.__station, 
                                            (int(self.__x.get()), 
                                             int(self.__y.get())))
             self.__plotter.set_network(self.__network, "FCM")
         elif(len(self.__devices) > 0):
+            if(not self.__colors):
+                self.__colors.append((random(), random(), random()))
             self.__network = DeviceNetwork(
                     [
                         DeviceCluster(devices, 
                                       self.__devices[0],
-                                      self.__devices[0].get_pos()) 
+                                      self.__devices[0].get_pos(),
+                                      self.__colors[0]) 
                     ], 
                     self.__station, (int(self.__x.get()), int(self.__y.get())))
             self.__plotter.set_network(self.__network, "FCM")

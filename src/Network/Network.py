@@ -5,11 +5,12 @@ from src.Network.Cluster import DeviceCluster
 from random import random
 
 class DeviceNetwork:
-    def __init__(self, clusters, station, map_size):
+    def __init__(self, clusters, station, map_size, color=None):
         self.__clusters = clusters
         self.__station = station
         self.__map_size = map_size
-        self.__color = (random(), random(), random())
+        if(color is None):
+            self.__color = (random(), random(), random())
 
     def get_clusters(self):
         return self.__clusters
