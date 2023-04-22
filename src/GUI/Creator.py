@@ -111,7 +111,7 @@ class Creator(tk.Toplevel):
     def __save(self):
         if(self.__network is not None and self.__station is not None):
             filename = askstring("File Name", "Enter file name to save topology.")
-            self.__network.serialize("networks/" + filename + ".json")
+            self.__network.save("networks/" + filename + ".json")
             self.__close()
         elif(self.__station is None):
             messagebox.showerror("Error", "No base station in network topology.")

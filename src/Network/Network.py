@@ -32,7 +32,7 @@ class DeviceNetwork:
             cluster = self.__clusters[i]
             data['map_size'] = self.__map_size
             data['clusters'].append({})
-            data['clusters'][i]['centroid'] = cluster.get_centroid().tolist()
+            data['clusters'][i]['centroid'] = list(cluster.get_centroid())
             data['clusters'][i]['color'] = cluster.get_color()
             data['clusters'][i]['head'] = {
                 'pos': cluster.get_head().get_pos(),
